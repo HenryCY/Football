@@ -1,0 +1,3046 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="小小战术家" />
+  <title>小小战术家 · 少儿足球跑位与球商学院</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <style>
+    :root {
+      --font-sans: "PingFang SC", "Hiragino Sans GB", "Inter", -apple-system, BlinkMacSystemFont, "Microsoft YaHei", sans-serif;
+    }
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      font-family: var(--font-sans);
+      background: linear-gradient(160deg, #ecfdf5 0%, #f0f9ff 50%, #f8fafc 100%);
+      color: #0f172a;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .pitch-shadow {
+      box-shadow: 0 18px 40px -12px rgba(6, 78, 59, 0.28), 0 4px 12px rgba(15, 23, 42, 0.08);
+    }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      background: transparent;
+      cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 8px;
+      border-radius: 999px;
+      background: #e2e8f0;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #10b981;
+      border: 3px solid #ffffff;
+      box-shadow: 0 2px 6px rgba(16, 185, 129, 0.45);
+      margin-top: -7px;
+      transition: transform 0.15s ease;
+    }
+    input[type="range"]::-webkit-slider-thumb:active {
+      transform: scale(1.18);
+    }
+    .btn-tap {
+      transition: transform 0.12s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .btn-tap:active {
+      transform: scale(0.96);
+    }
+    @keyframes floatSoft {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-3px); }
+    }
+    .animate-float {
+      animation: floatSoft 2.6s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body class="antialiased selection:bg-emerald-200 selection:text-emerald-950">
+
+  <!-- Top Navigation Header -->
+  <header class="sticky top-0 z-30 glass-card border-b border-emerald-100/80 shadow-sm">
+    <div class="max-w-7xl mx-auto px-3 sm:px-5 py-2.5 flex flex-wrap items-center justify-between gap-2.5">
+      <!-- Brand -->
+      <div class="flex items-center gap-2.5">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-md shadow-emerald-500/25 text-xl">
+          ⚽
+        </div>
+        <div>
+          <h1 class="text-base sm:text-lg font-extrabold tracking-tight text-slate-900 leading-tight">小小战术家</h1>
+          <p class="text-[11px] font-medium text-emerald-700 leading-tight">少儿足球跑位与大局观学院 · iPad版</p>
+        </div>
+      </div>
+
+      <!-- Format Switcher (5v5 / 8v8 / 11v11) -->
+      <div class="flex items-center bg-slate-100 p-1 rounded-2xl border border-slate-200/80" role="tablist" aria-label="比赛赛制">
+        <button id="fmt-5" data-format="5" class="fmt-btn btn-tap px-3 sm:px-4 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all">
+          5人制
+        </button>
+        <button id="fmt-8" data-format="8" class="fmt-btn btn-tap px-3 sm:px-4 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all">
+          8人制
+        </button>
+        <button id="fmt-11" data-format="11" class="fmt-btn btn-tap px-3 sm:px-4 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all">
+          11人制
+        </button>
+      </div>
+
+      <!-- Phase Switcher (Attack / Defense) + Stars + Sound -->
+      <div class="flex items-center gap-2">
+        <div class="flex items-center bg-slate-100 p-1 rounded-2xl border border-slate-200/80" role="tablist" aria-label="攻防阶段">
+          <button id="phase-attack" data-phase="attack" class="phase-btn btn-tap px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1 transition-all">
+            <span>⚡</span><span>进攻</span>
+          </button>
+          <button id="phase-defense" data-phase="defense" class="phase-btn btn-tap px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1 transition-all">
+            <span>🛡️</span><span>防守</span>
+          </button>
+        </div>
+
+        <button id="btn-progress" class="btn-tap flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 text-xs sm:text-sm font-bold hover:bg-amber-100" title="查看我的球商成长">
+          <span>⭐</span>
+          <span id="star-count">0</span>
+        </button>
+
+        <button id="btn-sound" class="btn-tap w-9 h-9 rounded-2xl bg-white border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-slate-50 shadow-sm" title="开关音效" aria-label="开关音效">
+          <span id="sound-icon">🔊</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Position Selector Bar -->
+    <div class="border-t border-slate-100 bg-white/80">
+      <div class="max-w-7xl mx-auto px-3 sm:px-5 py-2 flex items-center gap-2 overflow-x-auto no-scrollbar" id="position-bar" aria-label="选择球员位置">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Workspace -->
+  <main class="max-w-7xl mx-auto px-3 sm:px-5 py-4">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+
+      <!-- LEFT COLUMN: Pitch & Animation Stage -->
+      <section class="lg:col-span-8 flex flex-col gap-3">
+        <!-- Scenario Picker + Mode Switcher -->
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5" id="scenario-tabs">
+            <!-- Populated by JS -->
+          </div>
+          <div class="flex items-center gap-1.5 bg-white p-1 rounded-2xl border border-slate-200 shadow-sm">
+            <button id="mode-learn" data-mode="learn" class="mode-btn btn-tap px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1">
+              <span>🎬</span><span>动图讲解</span>
+            </button>
+            <button id="mode-quiz" data-mode="quiz" class="mode-btn btn-tap px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1">
+              <span>🧠</span><span>球商测验</span>
+            </button>
+            <button id="mode-draw" data-mode="draw" class="mode-btn btn-tap px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1">
+              <span>✏️</span><span>教练画笔</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Pitch Canvas Container -->
+        <div class="relative rounded-3xl overflow-hidden bg-emerald-800 pitch-shadow border-4 border-white select-none">
+          <!-- Top-left Format & Formation Pill -->
+          <div class="absolute top-3 left-3 z-10 flex flex-wrap items-center gap-1.5 pointer-events-none">
+            <span id="pitch-badge-format" class="px-2.5 py-1 rounded-full bg-slate-900/65 backdrop-blur text-white text-[11px] font-bold tracking-wide">
+              11人制 · 4-2-3-1
+            </span>
+            <span id="pitch-badge-dir" class="px-2.5 py-1 rounded-full bg-emerald-500/85 backdrop-blur text-white text-[11px] font-bold">
+              进攻方向 →
+            </span>
+          </div>
+
+          <!-- Top-right Drawing Controls (visible only in draw mode) -->
+          <div id="draw-toolbar" class="hidden absolute top-3 right-3 z-20 flex items-center gap-1.5 bg-slate-900/75 backdrop-blur px-2.5 py-1.5 rounded-2xl">
+            <button data-color="#facc15" class="draw-color w-6 h-6 rounded-full bg-yellow-400 border-2 border-white" title="黄色画笔"></button>
+            <button data-color="#38bdf8" class="draw-color w-6 h-6 rounded-full bg-sky-400 border-2 border-transparent" title="蓝色画笔"></button>
+            <button data-color="#fb7185" class="draw-color w-6 h-6 rounded-full bg-rose-400 border-2 border-transparent" title="红色画笔"></button>
+            <button id="btn-clear-draw" class="ml-1 px-2.5 py-1 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-bold">清除</button>
+          </div>
+
+          <!-- Canvas Wrapper (16:10.5 stadium ratio) -->
+          <div id="pitch-container" class="relative w-full" style="aspect-ratio: 100 / 66;">
+            <canvas id="pitch-canvas" class="block w-full h-full touch-none cursor-pointer"></canvas>
+          </div>
+
+          <!-- Legend Strip on Bottom of Pitch -->
+          <div class="bg-slate-900/85 text-white px-4 py-2 flex flex-wrap items-center justify-between gap-2 text-[11px] sm:text-xs">
+            <div class="flex flex-wrap items-center gap-3">
+              <span class="flex items-center gap-1.5 font-semibold">
+                <span class="w-3.5 h-3.5 rounded-full bg-amber-400 border-2 border-white inline-block shadow"></span>
+                我（重点学习）
+              </span>
+              <span class="flex items-center gap-1.5 text-sky-200">
+                <span class="w-3 h-3 rounded-full bg-sky-400 border border-white inline-block"></span>
+                队友
+              </span>
+              <span class="flex items-center gap-1.5 text-rose-200">
+                <span class="w-3 h-3 rounded-full bg-rose-500 border border-white inline-block"></span>
+                对手
+              </span>
+              <span class="flex items-center gap-1.5 text-amber-200">
+                <span class="inline-block w-4 border-t-2 border-dashed border-amber-300"></span>
+                跑位路线
+              </span>
+            </div>
+            <!-- Layer Toggles -->
+            <div class="flex items-center gap-2">
+              <button id="toggle-zones" class="layer-toggle px-2 py-0.5 rounded-lg bg-emerald-500/30 border border-emerald-400/50 text-emerald-100 font-medium">空当热区</button>
+              <button id="toggle-lines" class="layer-toggle px-2 py-0.5 rounded-lg bg-emerald-500/30 border border-emerald-400/50 text-emerald-100 font-medium">配合路线</button>
+              <button id="toggle-bubbles" class="layer-toggle px-2 py-0.5 rounded-lg bg-emerald-500/30 border border-emerald-400/50 text-emerald-100 font-medium">球场气泡</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Animation Playback Controls -->
+        <div id="playback-bar" class="glass-card rounded-2xl border border-slate-200/90 p-3 shadow-sm flex flex-wrap items-center gap-3">
+          <div class="flex items-center gap-1.5">
+            <button id="btn-play" class="btn-tap w-11 h-11 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/25 text-lg font-bold" title="播放或暂停">
+              ⏸
+            </button>
+            <button id="btn-prev-step" class="btn-tap w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center font-bold" title="上一步">
+              ⏮
+            </button>
+            <button id="btn-next-step" class="btn-tap w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center font-bold" title="下一步">
+              ⏭
+            </button>
+            <button id="btn-replay" class="btn-tap w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center font-bold" title="重播">
+              🔄
+            </button>
+          </div>
+
+          <!-- Progress Scrubber -->
+          <div class="flex-1 min-w-[140px] flex flex-col gap-1">
+            <div class="flex items-center justify-between text-[11px] font-bold text-slate-500">
+              <span id="step-indicator">第 1 步 · 观察站位</span>
+              <span id="time-percent">0%</span>
+            </div>
+            <input id="time-slider" type="range" min="0" max="1000" value="0" class="w-full" aria-label="动画进度条" />
+          </div>
+
+          <!-- Speed Selector -->
+          <div class="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
+            <button data-speed="0.5" class="speed-btn btn-tap px-2.5 py-1 rounded-lg text-xs font-bold text-slate-600">0.5x慢</button>
+            <button data-speed="1" class="speed-btn btn-tap px-2.5 py-1 rounded-lg text-xs font-bold bg-white text-emerald-700 shadow-sm">1x</button>
+            <button data-speed="1.5" class="speed-btn btn-tap px-2.5 py-1 rounded-lg text-xs font-bold text-slate-600">1.5x快</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT COLUMN: Coaching Story, Mantra, Vision & Quiz -->
+      <aside class="lg:col-span-4 flex flex-col gap-3">
+
+        <!-- Header Summary Card -->
+        <div class="glass-card rounded-3xl border border-slate-200/90 p-4 shadow-sm">
+          <div class="flex items-start justify-between gap-2 mb-2">
+            <div>
+              <div class="flex items-center gap-1.5 mb-1">
+                <span id="card-pos-tag" class="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs font-extrabold">中锋 ST</span>
+                <span id="card-badge-tag" class="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">反越位神跑位</span>
+              </div>
+              <h2 id="card-title" class="text-lg font-extrabold text-slate-900 leading-snug">斜插防线身后</h2>
+            </div>
+            <div id="card-stars" class="text-amber-400 text-sm tracking-tight shrink-0" title="球商星级">★★☆</div>
+          </div>
+          <p id="card-summary" class="text-sm text-slate-600 leading-relaxed">
+            队友抬头准备直塞时，先横向拉开盯人后卫，再突然加速斜插中卫和边后卫之间的空当！
+          </p>
+        </div>
+
+        <!-- LEARN MODE PANEL -->
+        <div id="panel-learn" class="flex flex-col gap-3">
+          <!-- 3-Step Interactive Breakdown -->
+          <div class="glass-card rounded-3xl border border-slate-200/90 p-4 shadow-sm">
+            <div class="flex items-center justify-between mb-2.5">
+              <h3 class="text-sm font-extrabold text-slate-800 flex items-center gap-1.5">
+                <span>🎯</span><span>跑位三步走（点击可定格）</span>
+              </h3>
+              <button id="btn-mark-learned" class="btn-tap px-2.5 py-1 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100">
+                ✓ 我学会了
+              </button>
+            </div>
+            <div id="steps-list" class="flex flex-col gap-2">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+
+          <!-- 3-Second Kid Mantra -->
+          <div class="rounded-3xl bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/90 p-4 shadow-sm">
+            <div class="flex items-center gap-2 mb-1.5">
+              <span class="w-7 h-7 rounded-xl bg-amber-400 text-white flex items-center justify-center text-sm shadow-sm">💡</span>
+              <h3 class="text-sm font-extrabold text-amber-900">3秒球商口诀</h3>
+            </div>
+            <p id="card-mantra" class="text-base font-extrabold text-amber-950 leading-snug">
+              「先反拉、再斜插，盯着越位线出发！」
+            </p>
+          </div>
+
+          <!-- Big-Picture Vision Checklist -->
+          <div class="glass-card rounded-3xl border border-sky-200/80 p-4 shadow-sm bg-gradient-to-br from-white to-sky-50/60">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="w-7 h-7 rounded-xl bg-sky-500 text-white flex items-center justify-center text-sm shadow-sm">👀</span>
+              <h3 class="text-sm font-extrabold text-slate-800">大局观 · 抬头看这 3 点</h3>
+            </div>
+            <ul id="vision-list" class="space-y-2 text-xs sm:text-sm text-slate-700">
+              <!-- Populated by JS -->
+            </ul>
+          </div>
+
+          <!-- Format-Specific Tip -->
+          <div class="rounded-2xl bg-slate-800 text-slate-100 px-4 py-3 text-xs leading-relaxed flex items-start gap-2.5">
+            <span class="text-base shrink-0">📋</span>
+            <div>
+              <span id="format-tip-title" class="font-bold text-emerald-300">11人制空间提示：</span>
+              <span id="format-tip-body">球场宽大，启动前先观察越位线，尽量斜向跑动而不是直线冲向门将。</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- QUIZ MODE PANEL -->
+        <div id="panel-quiz" class="hidden flex flex-col gap-3">
+          <div class="glass-card rounded-3xl border-2 border-indigo-200 p-4 shadow-sm bg-gradient-to-br from-white to-indigo-50/50">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="px-2.5 py-0.5 rounded-full bg-indigo-600 text-white text-xs font-extrabold">球商小考官</span>
+              <span class="text-xs font-semibold text-indigo-700">可直接点击球场上的 A / B / C 光圈！</span>
+            </div>
+            <h3 id="quiz-question" class="text-base font-extrabold text-slate-900 leading-snug mb-3">
+              队友中场抬头拿球了，作为前锋你现在应该往哪里跑？
+            </h3>
+            <div id="quiz-options" class="flex flex-col gap-2">
+              <!-- Populated by JS -->
+            </div>
+            <div id="quiz-feedback" class="hidden mt-3 p-3.5 rounded-2xl text-sm font-medium leading-relaxed"></div>
+            <div class="mt-3 flex items-center justify-between gap-2">
+              <button id="btn-quiz-retry" class="btn-tap px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold">
+                重做本题
+              </button>
+              <button id="btn-quiz-watch" class="btn-tap px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold shadow-sm">
+                看动画演示 →
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </aside>
+    </div>
+  </main>
+
+  <!-- Progress Modal -->
+  <div id="progress-modal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-5 shadow-2xl border border-slate-100">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">🏆</span>
+          <h3 class="text-lg font-extrabold text-slate-900">我的球商成长册</h3>
+        </div>
+        <button id="close-progress" class="btn-tap w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold">✕</button>
+      </div>
+      <div class="grid grid-cols-2 gap-3 mb-4">
+        <div class="rounded-2xl bg-emerald-50 border border-emerald-200 p-3 text-center">
+          <div class="text-2xl font-black text-emerald-700" id="stat-learned">0</div>
+          <div class="text-xs font-bold text-emerald-800 mt-0.5">已学会战术</div>
+        </div>
+        <div class="rounded-2xl bg-amber-50 border border-amber-200 p-3 text-center">
+          <div class="text-2xl font-black text-amber-600" id="stat-quiz">0</div>
+          <div class="text-xs font-bold text-amber-800 mt-0.5">答对球商测验</div>
+        </div>
+      </div>
+      <div class="rounded-2xl bg-slate-50 border border-slate-200 p-3.5 mb-4">
+        <div class="flex items-center justify-between text-xs font-bold text-slate-700 mb-1.5">
+          <span>当前段位</span>
+          <span id="stat-rank" class="text-emerald-600">绿茵新星</span>
+        </div>
+        <div class="w-full h-3 bg-slate-200 rounded-full overflow-hidden">
+          <div id="stat-bar" class="h-full bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full transition-all duration-500" style="width: 5%"></div>
+        </div>
+        <p class="text-[11px] text-slate-500 mt-2">每学会 1 个跑位动图或答对 1 道球商测验，就能点亮 1 颗球商星！</p>
+      </div>
+      <div class="flex items-center justify-between">
+        <button id="btn-reset-progress" class="text-xs text-slate-400 hover:text-rose-500 font-medium">重置记录</button>
+        <button id="btn-keep-learning" class="btn-tap px-5 py-2 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold shadow-md">继续训练 ⚽</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl bg-slate-900/90 text-white text-sm font-bold shadow-xl opacity-0 pointer-events-none transition-all duration-300">
+    提示信息
+  </div>
+
+<script>
+(function() {
+  'use strict';
+
+  // =========================================================
+  // 1. AUDIO SYNTHESIZER (Web Audio API, kid-friendly sounds)
+  // =========================================================
+  let audioCtx = null;
+  let soundEnabled = true;
+
+  function ensureAudio() {
+    if (!soundEnabled) return null;
+    try {
+      if (!audioCtx) {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (Ctx) audioCtx = new Ctx();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function playTone(freq, duration, type, volume) {
+    const ctx = ensureAudio();
+    if (!ctx) return;
+    try {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type || 'sine';
+      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+      gain.gain.setValueAtTime(volume || 0.08, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + duration);
+    } catch (e) {}
+  }
+
+  function sfxTap() { playTone(520, 0.07, 'triangle', 0.06); }
+  function sfxKick() { playTone(160, 0.09, 'sine', 0.12); }
+  function sfxSuccess() {
+    playTone(523.25, 0.12, 'triangle', 0.1);
+    setTimeout(() => playTone(659.25, 0.12, 'triangle', 0.1), 100);
+    setTimeout(() => playTone(783.99, 0.22, 'triangle', 0.12), 200);
+  }
+  function sfxWrong() {
+    playTone(280, 0.14, 'sawtooth', 0.06);
+    setTimeout(() => playTone(210, 0.2, 'sawtooth', 0.06), 120);
+  }
+
+  // =========================================================
+  // 2. FORMATS & POSITIONS METADATA
+  // =========================================================
+  const FORMATS = {
+    5: {
+      id: 5,
+      name: '5人制',
+      formationLabel: '1-2-1 菱形阵型',
+      positions: ['ST', 'LW', 'RW', 'CB'],
+      tipAttack: '5人制场地小、节奏快！没有越位规则，大胆利用撞墙二过一和换位跑动拉出射门角度。',
+      tipDefense: '5人制丢球后3秒内就要回防！保持紧凑菱形，千万别轻易扑抢被对手一步过掉。'
+    },
+    8: {
+      id: 8,
+      name: '8人制',
+      formationLabel: '3-2-2 / 2-3-2 成长阵型',
+      positions: ['ST', 'LW', 'RW', 'CAM', 'CM', 'CDM', 'LB', 'RB', 'CB'],
+      tipAttack: '8人制是小场到大场的桥梁！学会利用球场宽度，边路和中路形成“三角形接应”最容易破防。',
+      tipDefense: '8人制要注意保护中路和身后空当，离球最近的人去延缓，其他人立刻收缩保护队友身后。'
+    },
+    11: {
+      id: 11,
+      name: '11人制',
+      formationLabel: '4-2-3-1 / 4-3-3 标准阵型',
+      positions: ['ST', 'LW', 'RW', 'CAM', 'CM', 'CDM', 'LB', 'RB', 'CB'],
+      tipAttack: '11人制空间大、有完整越位线！多利用“弱侧转移”和“肋部空当”，让球比人跑得更快。',
+      tipDefense: '11人制强调“三线紧凑”和整体移动：球在左边，全队一起向左平移，保护好危险中路！'
+    }
+  };
+
+  const POSITIONS = {
+    ST:  { id: 'ST',  name: '中锋/前锋', short: '前锋', code: 'ST',  icon: '⚡', num: 9  },
+    CAM: { id: 'CAM', name: '前腰',      short: '前腰', code: 'CAM', icon: '🎯', num: 10 },
+    LW:  { id: 'LW',  name: '左边锋',    short: '左边锋', code: 'LW', icon: '🏃', num: 11 },
+    RW:  { id: 'RW',  name: '右边锋',    short: '右边锋', code: 'RW', icon: '💨', num: 7  },
+    CM:  { id: 'CM',  name: '中场',      short: '中场', code: 'CM',  icon: '🧭', num: 8  },
+    CDM: { id: 'CDM', name: '后腰',      short: '后腰', code: 'CDM', icon: '⚓', num: 6  },
+    LB:  { id: 'LB',  name: '左后卫',    short: '左后卫', code: 'LB', icon: '⬅️', num: 3  },
+    RB:  { id: 'RB',  name: '右后卫',    short: '右后卫', code: 'RB', icon: '➡️', num: 2  },
+    CB:  { id: 'CB',  name: '中卫',      short: '中卫', code: 'CB',  icon: '🏰', num: 4  }
+  };
+
+  // Base ambient team layouts (0..100 x 0..66, attacking Left -> Right)
+  // Used to fill non-key teammates/opponents naturally according to 5v5 / 8v8 / 11v11
+  const BASE_SQUADS = {
+    5: {
+      ally: [
+        { role: 'GK', num: 1, x: 7, y: 33, isGK: true },
+        { role: 'CB', num: 4, x: 28, y: 33 },
+        { role: 'LW', num: 11, x: 52, y: 15 },
+        { role: 'RW', num: 7, x: 52, y: 51 },
+        { role: 'ST', num: 9, x: 72, y: 33 }
+      ],
+      opp: [
+        { role: 'GK', num: 1, x: 93, y: 33, isGK: true },
+        { role: 'CB', num: 5, x: 76, y: 33 },
+        { role: 'LW', num: 10, x: 58, y: 16 },
+        { role: 'RW', num: 8, x: 58, y: 50 },
+        { role: 'ST', num: 9, x: 38, y: 33 }
+      ]
+    },
+    8: {
+      ally: [
+        { role: 'GK', num: 1, x: 6, y: 33, isGK: true },
+        { role: 'LB', num: 3, x: 26, y: 14 },
+        { role: 'CB', num: 4, x: 24, y: 33 },
+        { role: 'RB', num: 2, x: 26, y: 52 },
+        { role: 'CDM', num: 6, x: 42, y: 33 },
+        { role: 'CM', num: 8, x: 50, y: 20 },
+        { role: 'CAM', num: 10, x: 60, y: 33 },
+        { role: 'LW', num: 11, x: 66, y: 13 },
+        { role: 'RW', num: 7, x: 66, y: 53 },
+        { role: 'ST', num: 9, x: 76, y: 33 }
+      ],
+      opp: [
+        { role: 'GK', num: 1, x: 94, y: 33, isGK: true },
+        { role: 'LB', num: 3, x: 76, y: 52 },
+        { role: 'CB', num: 5, x: 78, y: 33 },
+        { role: 'RB', num: 2, x: 76, y: 14 },
+        { role: 'CM', num: 6, x: 60, y: 24 },
+        { role: 'CM', num: 8, x: 60, y: 42 },
+        { role: 'LW', num: 11, x: 44, y: 50 },
+        { role: 'ST', num: 9, x: 40, y: 33 }
+      ]
+    },
+    11: {
+      ally: [
+        { role: 'GK', num: 1, x: 5, y: 33, isGK: true },
+        { role: 'LB', num: 3, x: 25, y: 10 },
+        { role: 'CB', num: 4, x: 22, y: 25 },
+        { role: 'CB2', num: 5, x: 22, y: 41 },
+        { role: 'RB', num: 2, x: 25, y: 56 },
+        { role: 'CDM', num: 6, x: 40, y: 33 },
+        { role: 'CM', num: 8, x: 50, y: 21 },
+        { role: 'CAM', num: 10, x: 60, y: 37 },
+        { role: 'LW', num: 11, x: 68, y: 11 },
+        { role: 'RW', num: 7, x: 68, y: 55 },
+        { role: 'ST', num: 9, x: 76, y: 33 }
+      ],
+      opp: [
+        { role: 'GK', num: 1, x: 95, y: 33, isGK: true },
+        { role: 'RB', num: 2, x: 77, y: 11 },
+        { role: 'CB', num: 4, x: 79, y: 25 },
+        { role: 'CB2', num: 5, x: 79, y: 41 },
+        { role: 'LB', num: 3, x: 77, y: 55 },
+        { role: 'CDM', num: 6, x: 64, y: 26 },
+        { role: 'CM', num: 8, x: 64, y: 40 },
+        { role: 'RW', num: 7, x: 52, y: 13 },
+        { role: 'CAM', num: 10, x: 52, y: 33 },
+        { role: 'LW', num: 11, x: 52, y: 53 },
+        { role: 'ST', num: 9, x: 38, y: 33 }
+      ]
+    }
+  };
+
+  // =========================================================
+  // 3. TACTICAL SCENARIOS LIBRARY (All 9 Positions x Attack & Defense)
+  // =========================================================
+  // Coordinates: x in [0, 100], y in [0, 66]. Our goal is x=0, Opp goal is x=100.
+  const SCENARIOS = {
+    ST: {
+      attack: [
+        {
+          id: 'st-atk-behind',
+          title: '斜插防线身后（反越位）',
+          badge: '致命直塞跑位',
+          difficulty: 2,
+          summary: '中场队友抬头拿球准备直塞时，先向外侧假装拉扯带走中卫，再突然加速斜插中卫与边后卫之间的空当！',
+          mantra: '「先反拉、再斜插，盯着队友抬头那一下！」',
+          visionTips: [
+            '看持球队友：当他调整好脚步、抬头看向前面，就是启动信号！',
+            '看对手最后一名后卫：保持平行不越位，把身体侧过来方便加速。',
+            '看身后空当：往门将和后卫中间的大片草地斜着插过去。'
+          ],
+          steps: [
+            { t: 0.0, title: '1. 观察与反拉', desc: '队友中场控球，先轻轻往左侧走两步，把盯防你的中卫拉离防线中路。', bubble: '先往左拉扯中卫！' },
+            { t: 0.4, title: '2. 看准抬头启动', desc: '队友抬头瞬间，马上反方向加速斜插，抢在对手回追前冲入空当！', bubble: '队友抬头了，斜插！' },
+            { t: 0.78, title: '3. 接直塞形成单刀', desc: '顺着球滚动方向领球进禁区，面对门将冷静推射远角！', bubble: '好球！单刀射门！' }
+          ],
+          zones: [
+            { x: 84, y: 38, rx: 8, ry: 9, color: 'rgba(250, 204, 21, 0.28)', border: '#facc15', label: '身后黄金空当', fromT: 0.2, toT: 1.0 }
+          ],
+          actors: [
+            { id: 'hero', team: 'ally', role: 'ST', num: 9, isHero: true, kf: [{t:0,x:72,y:30},{t:0.32,x:71,y:21},{t:0.65,x:81,y:34},{t:1,x:88,y:38}] },
+            { id: 'cam', team: 'ally', role: 'CAM', num: 10, kf: [{t:0,x:55,y:34},{t:0.42,x:61,y:33},{t:1,x:68,y:32}] },
+            { id: 'lw', team: 'ally', role: 'LW', num: 11, kf: [{t:0,x:66,y:10},{t:0.5,x:74,y:10},{t:1,x:80,y:13}] },
+            { id: 'ocb1', team: 'opp', role: 'CB', num: 4, kf: [{t:0,x:76,y:28},{t:0.35,x:75,y:22},{t:0.75,x:80,y:31},{t:1,x:83,y:35}] },
+            { id: 'ocb2', team: 'opp', role: 'CB2', num: 5, kf: [{t:0,x:77,y:43},{t:0.5,x:78,y:45},{t:1,x:83,y:42}] }
+          ],
+          ball: [
+            { t: 0, x: 56, y: 34 },
+            { t: 0.42, x: 62, y: 33 },
+            { t: 0.78, x: 85, y: 37 },
+            { t: 0.92, x: 89, y: 38 },
+            { t: 1.0, x: 98, y: 34 }
+          ],
+          passLines: [
+            { fromT: 0.42, toT: 0.8, x1: 62, y1: 33, x2: 85, y2: 37, type: 'pass' }
+          ],
+          quiz: {
+            question: '前腰队友已经抬头准备传直塞，对手中卫正紧贴着你，你应该往哪跑？',
+            freezeT: 0.35,
+            options: [
+              { id: 'A', x: 63, y: 26, label: 'A. 往回跑到队友身边', correct: false, feedback: '队友正准备向前打身后呢！往回跑会把防守队员也带过去，错失单刀良机。' },
+              { id: 'B', x: 84, y: 37, label: 'B. 突然变向斜插中卫身后空当', correct: true, feedback: '太棒了！先拉扯再反跑斜插，既不越位又能甩开后卫拿到单刀球！' },
+              { id: 'C', x: 89, y: 16, label: 'C. 提前站到越位位置等球', correct: false, feedback: '小心越位哦！跑得太早越过最后一名后卫，裁判会吹哨的。' }
+            ]
+          }
+        },
+        {
+          id: 'st-atk-cross',
+          title: '边路传中·假前点抢后点',
+          badge: '禁区杀手嗅觉',
+          difficulty: 2,
+          summary: '右边锋下底准备传中时，不要傻傻站着等球！先向近门柱假跑骗过中卫，再突然减速绕到后点空当轻松推射！',
+          mantra: '「站着等球没机会，先晃前点再兜后点！」',
+          visionTips: [
+            '看边锋脚步：当他趟球准备起脚传中前1秒，就要开始骗对手了。',
+            '看中卫眼神：中卫往往只盯球不盯人，趁他看球时绕到他盲区！',
+            '看队友位置：如果队友抢了前点，我就果断去抢后点，绝不撞在一起。'
+          ],
+          steps: [
+            { t: 0.0, title: '1. 边路推进，禁区选位', desc: '右边锋高速带球下底，你先待在点球点附近观察中卫位置。', bubble: '观察中卫站哪儿' },
+            { t: 0.36, title: '2. 假冲前点骗后卫', desc: '先向近门柱方向跨出两步，把中卫吸引到前点！', bubble: '假装抢前点！' },
+            { t: 0.75, title: '3. 绕到后点轻松破门', desc: '突然急停转身绕到后点空当，稳稳接高空传中推射空门！', bubble: '后点完全空了！' }
+          ],
+          zones: [
+            { x: 89, y: 23, rx: 6, ry: 7, color: 'rgba(250, 204, 21, 0.3)', border: '#facc15', label: '后点无人区', fromT: 0.35, toT: 1.0 }
+          ],
+          actors: [
+            { id: 'hero', team: 'ally', role: 'ST', num: 9, isHero: true, kf: [{t:0,x:76,y:32},{t:0.35,x:84,y:38},{t:0.72,x:89,y:24},{t:1,x:91,y:24}] },
+            { id: 'rw', team: 'ally', role: 'RW', num: 7, kf: [{t:0,x:74,y:56},{t:0.52,x:90,y:57},{t:1,x:91,y:54}] },
+            { id: 'cam', team: 'ally', role: 'CAM', num: 10, kf: [{t:0,x:64,y:35},{t:0.5,x:76,y:37},{t:1,x:82,y:39}] },
+            { id: 'ocb1', team: 'opp', role: 'CB', num: 4, kf: [{t:0,x:81,y:32},{t:0.42,x:86,y:39},{t:1,x:88,y:37}] },
+            { id: 'ocb2', team: 'opp', role: 'CB2', num: 5, kf: [{t:0,x:83,y:44},{t:0.55,x:89,y:44},{t:1,x:90,y:41}] }
+          ],
+          ball: [
+            { t: 0, x: 75, y: 56 },
+            { t: 0.52, x: 91, y: 56 },
+            { t: 0.82, x: 89, y: 24, loft: true },
+            { t: 1.0, x: 98, y: 29 }
+          ],
+          passLines: [
+            { fromT: 0.52, toT: 0.82, x1: 91, y1: 56, x2: 89, y2: 24, type: 'pass' }
+          ],
+          quiz: {
+            question: '右边锋下底准备起脚传中，两名中卫都挤向了前点，你该去哪接球？',
+            freezeT: 0.45,
+            options: [
+              { id: 'A', x: 88, y: 41, label: 'A. 硬挤进前点人群里', correct: false, feedback: '前点已经站满了防守球员，硬挤很难抢到球哦！' },
+              { id: 'B', x: 89, y: 23, label: 'B. 甩开防守绕到后点空当', correct: true, feedback: '球商拉满！后卫都在盯前点，绕到后点盲区就能轻松破门！' },
+              { id: 'C', x: 70, y: 34, label: 'C. 退到大禁区外面看热闹', correct: false, feedback: '中锋要敢于进禁区抢点，弧顶留给后排插上的前腰就好。' }
+            ]
+          }
+        },
+        {
+          id: 'st-atk-wall',
+          title: '回撤背身做墙（撞墙配合）',
+          badge: '团队支点配合',
+          difficulty: 1,
+          summary: '当对手中卫紧贴防死身后时，主动回撤一步接球，背身稳稳做球给前插的前腰或边锋，自己再转身冲入禁区！',
+          mantra: '「回撤做球像面墙，做完立刻转身闯！」',
+          visionTips: [
+            '接球前先回头扫一眼：看看身后中卫离我有多远。',
+            '看队友插上：把球舒服地做到前腰跑动的前方，让他顺步加速。',
+            '做球后别站着看：立刻转身冲进禁区准备接二过一回传！'
+          ],
+          steps: [
+            { t: 0.0, title: '1. 主动回撤要球', desc: '中卫防线靠后，主动往中场回撤一步甩开贴防，伸手要球。', bubble: '回撤接应，给我脚下！' },
+            { t: 0.42, title: '2. 一脚做球给前腰', desc: '用身体护住球，轻巧一脚回做给高速前插的前腰队友！', bubble: '做给你，快前插！' },
+            { t: 0.78, title: '3. 转身反插进禁区', desc: '做完球马上转身加速冲向禁区，吸引防守或接应射门！', bubble: '转身冲禁区！' }
+          ],
+          zones: [
+            { x: 66, y: 33, rx: 6, ry: 7, color: 'rgba(56, 189, 248, 0.25)', border: '#38bdf8', label: '回撤接应点', fromT: 0.0, toT: 0.55 }
+          ],
+          actors: [
+            { id: 'hero', team: 'ally', role: 'ST', num: 9, isHero: true, kf: [{t:0,x:75,y:33},{t:0.35,x:66,y:33},{t:0.6,x:71,y:28},{t:1,x:85,y:26}] },
+            { id: 'cam', team: 'ally', role: 'CAM', num: 10, kf: [{t:0,x:55,y:40},{t:0.45,x:63,y:40},{t:0.8,x:79,y:39},{t:1,x:86,y:36}] },
+            { id: 'cm', team: 'ally', role: 'CM', num: 8, kf: [{t:0,x:48,y:28},{t:0.4,x:52,y:29},{t:1,x:60,y:31}] },
+            { id: 'ocb1', team: 'opp', role: 'CB', num: 4, kf: [{t:0,x:78,y:32},{t:0.38,x:71,y:33},{t:0.7,x:76,y:31},{t:1,x:82,y:29}] }
+          ],
+          ball: [
+            { t: 0, x: 49, y: 28 },
+            { t: 0.35, x: 65, y: 33 },
+            { t: 0.52, x: 64, y: 40 },
+            { t: 0.85, x: 84, y: 37 },
+            { t: 1.0, x: 96, y: 33 }
+          ],
+          passLines: [
+            { fromT: 0.05, toT: 0.35, x1: 49, y1: 28, x2: 65, y2: 33, type: 'pass' },
+            { fromT: 0.38, toT: 0.55, x1: 65, y1: 33, x2: 64, y2: 40, type: 'pass' }
+          ],
+          quiz: {
+            question: '你回撤接球后，已经一脚把球做给了插上的前腰，接下来该干什么？',
+            freezeT: 0.52,
+            options: [
+              { id: 'A', x: 66, y: 33, label: 'A. 留在原地看队友怎么踢', correct: false, feedback: '踢完球站在原地就少了一个进攻点哦！' },
+              { id: 'B', x: 84, y: 26, label: 'B. 立刻转身斜插进禁区接应', correct: true, feedback: '太聪明了！传完就跑（Give and Go）是足球最经典、最有效的配合！' },
+              { id: 'C', x: 52, y: 33, label: 'C. 退回本方半场休息', correct: false, feedback: '进攻正在关键时刻，快转身冲向球门吧！' }
+            ]
+          }
+        }
+      ],
+      defense: [
+        {
+          id: 'st-def-press',
+          title: '弧线逼抢·封锁中路传球',
+          badge: '第一道防线',
+          difficulty: 2,
+          summary: '前锋防守不是瞎追球！用“弧线跑”逼抢对方持球中卫，用身体影子挡住他传给后腰的路线，逼他把球赶向边线！',
+          mantra: '「画道弧线去逼抢，挡住中路赶边线！」',
+          visionTips: [
+            '看对手后腰：用自己的身体挡在持球中卫和对手后腰之间。',
+            '看队友阵型：等身后的队友站好位置再一起上抢，别单打独斗。',
+            '控制速度：快靠近时放慢小碎步，防止被对手一扣就过掉。'
+          ],
+          steps: [
+            { t: 0.0, title: '1. 盯住中路传球线', desc: '对方中卫在后场拿球，先站在他和对方后腰之间，封堵中路直传。', bubble: '先挡住中路！' },
+            { t: 0.45, title: '2. 弧线加速压迫', desc: '划一道弧线跑向持球中卫，逼迫他只能把球传给边线的边后卫！', bubble: '画弧线逼向边路！' },
+            { t: 0.8, title: '3. 配合队友边线围抢', desc: '球被逼到边路后，我方边锋立刻上抢形成包夹，成功断球！', bubble: '好！把球逼到陷阱了！' }
+          ],
+          zones: [
+            { x: 64, y: 33, rx: 8, ry: 8, color: 'rgba(239, 68, 68, 0.25)', border: '#ef4444', label: '封锁中路通道', fromT: 0.0, toT: 0.7 },
+            { x: 75, y: 12, rx: 7, ry: 7, color: 'rgba(16, 185, 129, 0.28)', border: '#10b981', label: '边路抢断陷阱', fromT: 0.55, toT: 1.0 }
+          ],
+          actors: [
+            { id: 'hero', team: 'ally', role: 'ST', num: 9, isHero: true, kf: [{t:0,x:64,y:34},{t:0.45,x:71,y:31},{t:0.8,x:75,y:26},{t:1,x:76,y:23}] },
+            { id: 'lw', team: 'ally', role: 'LW', num: 11, kf: [{t:0,x:60,y:15},{t:0.55,x:67,y:13},{t:1,x:75,y:12}] },
+            { id: 'ocb1', team: 'opp', role: 'CB', num: 4, kf: [{t:0,x:80,y:28},{t:0.55,x:80,y:25},{t:1,x:81,y:24}] },
+            { id: 'ocdm', team: 'opp', role: 'CDM', num: 6, kf: [{t:0,x:64,y:38},{t:0.5,x:63,y:37},{t:1,x:65,y:33}] },
+            { id: 'orb', team: 'opp', role: 'RB', num: 2, kf: [{t:0,x:76,y:12},{t:0.7,x:76,y:11},{t:1,x:78,y:12}] }
+          ],
+          ball: [
+            { t: 0, x: 79, y: 28 },
+            { t: 0.55, x: 79, y: 25 },
+            { t: 0.85, x: 76, y: 12 },
+            { t: 1.0, x: 74, y: 13 }
+          ],
+          passLines: [
+            { fromT: 0.55, toT: 0.85, x1: 79, y1: 25, x2: 76, y2: 12, type: 'pass' }
+          ],
+          quiz: {
+            question: '对方中卫拿球想传给中路后腰，你作为前锋应该从哪个路线跑去逼抢？',
+            freezeT: 0.25,
+            options: [
+              { id: 'A', x: 74, y: 18, label: 'A. 从边线外侧冲过去', correct: false, feedback: '从外侧冲过去会把中路完全让出来，对手一脚就能打穿中路！' },
+              { id: 'B', x: 72, y: 31, label: 'B. 挡住中路，画弧线逼向边线', correct: true, feedback: '完全正确！边线就像我们的第12名队友，把对手赶到边路最好抢！' },
+              { id: 'C', x: 48, y: 33, label: 'C. 直接退回中圈看着', correct: false, feedback: '给对方中卫太舒服的出球时间，他会轻松送出长传威胁我们球门。' }
+            ]
+          }
+        },
+        {
+          id: 'st-def-counter',
+          title: '防守时选好反击“出发点”',
+          badge: '反击神预判',
+          difficulty: 1,
+          summary: '当全队在本方半场防守时，前锋不要退到自家小禁区挤成一团！守在中线附近最空的一侧，队友一断球立刻启动反击！',
+          mantra: '「队友抢断我先看，找好空当打反击！」',
+          visionTips: [
+            '看队友谁可能断球：随时准备好身体朝向对方球门。',
+            '看对手边后卫：如果对手边后卫压上进攻了，他身后就是反击高速路！',
+            '大声喊队友：举手要球，告诉断球的队友你在这里！'
+          ],
+          steps: [
+            { t: 0.0, title: '1. 保持反击站位', desc: '对方压上进攻，你停在中线附近盯住对方拖后中卫，随时准备反击。', bubble: '盯紧对手身后空当！' },
+            { t: 0.45, title: '2. 队友断球瞬间启动', desc: '我方后腰成功断球！你立刻向对手边后卫留下的边路大空当冲刺！', bubble: '断球了！快长传找我！' },
+            { t: 0.82, title: '3. 接长传高速推进', desc: '稳稳停下长传球，直接带球杀向对方半场！', bubble: '反击开始！' }
+          ],
+          zones: [
+            { x: 64, y: 16, rx: 10, ry: 8, color: 'rgba(250, 204, 21, 0.28)', border: '#facc15', label: '反击高速路', fromT: 0.35, toT: 1.0 }
+          ],
+          actors: [
+            { id: 'hero', team: 'ally', role: 'ST', num: 9, isHero: true, kf: [{t:0,x:48,y:28},{t:0.4,x:50,y:23},{t:0.8,x:65,y:16},{t:1,x:76,y:19}] },
+            { id: 'cdm', team: 'ally', role: 'CDM', num: 6, kf: [{t:0,x:28,y:34},{t:0.4,x:32,y:32},{t:1,x:42,y:30}] },
+            { id: 'ocb1', team: 'opp', role: 'CB', num: 4, kf: [{t:0,x:55,y:31},{t:0.5,x:57,y:28},{t:1,x:68,y:25}] },
+            { id: 'ocam', team: 'opp', role: 'CAM', num: 10, kf: [{t:0,x:35,y:33},{t:0.45,x:34,y:33},{t:1,x:44,y:32}] }
+          ],
+          ball: [
+            { t: 0, x: 35, y: 33 },
+            { t: 0.42, x: 32, y: 32 },
+            { t: 0.8, x: 65, y: 16, loft: true },
+            { t: 1.0, x: 77, y: 19 }
+          ],
+          passLines: [
+            { fromT: 0.42, toT: 0.8, x1: 32, y1: 32, x2: 65, y2: 16, type: 'pass' }
+          ],
+          quiz: {
+            question: '我方后腰刚刚在本方禁区前断下球，对方右后卫还没退回来，你往哪冲刺？',
+            freezeT: 0.42,
+            options: [
+              { id: 'A', x: 64, y: 16, label: 'A. 斜向冲刺到对手留下的左路大空当', correct: true, feedback: '太帅了！利用对手压上留下的边路空当，反击一打一个准！' },
+              { id: 'B', x: 34, y: 32, label: 'B. 跑回自家禁区跟队友挤在一起', correct: false, feedback: '都挤在后场就没人接应反击了，球很难出得去哦！' },
+              { id: 'C', x: 56, y: 34, label: 'C. 直接躲在对方中卫身后站着', correct: false, feedback: '躲在后卫后面，队友根本没法把球传给你！' }
+            ]
+          }
+        }
+      ]
+    },
+
+    CAM: {
+      attack: [
+        {
+          id: 'cam-atk-pocket',
+          title: '潜伏“肋部口袋区”接球转身',
+          badge: '组织核心绝技',
+          difficulty: 2,
+          summary: '前腰最厉害的本领就是找到对方中场和后卫之间的“隐身口袋区”！接球前先回头观察，接球一顺转身就能送出致命直塞！',
+          mantra: '「站进对手两线间，接球之前先转头！」',
+          visionTips: [
+            '接球前“扫描”两次：看看背后有没有对方中卫冲上来抢你。',
+            '别和后腰站一条直线：稍微偏左或偏右，让队友能穿过缝隙传给你。',
+            '侧身接球：半转身接球，一眼就能同时看到球和前面的前锋！'
+          ],
+          steps: [
+            { t: 0.0, title: '1. 溜进两线口袋区', desc: '对方后腰和中卫之间有一块空当，悄悄移动进去，保持侧身站位！', bubble: '对手两线间没人管我！' },
+            { t: 0.42, title: '2. 侧身接球顺势转身', desc: '接到后腰的地面直传，顺势半转身面对球门，瞬间撕开中场！', bubble: '半转身！看到前锋了！' },
+            { t: 0.78, title: '3. 送出致命直塞球', desc: '趁对方中卫扑上来，轻轻一脚贴地直塞喂给插上的前锋！', bubble: '吃饼吧！直塞！' }
+          ],
+          zones: [
+            { x: 64, y: 26, rx: 7, ry: 7, color: 'rgba(250, 204, 21, 0.3)', border: '#facc15', label: '黄金口袋区', fromT: 0.0, toT: 0.75 }
+          ],
+          actors: [
+            { id: 'hero', team: 'ally', role: 'CAM', num: 10, isHero: true, kf: [{t:0,x:58,y:34},{t:0.35,x:64,y:26},{t:0.7,x:71,y:27},{t:1,x:75,y:29}] },
+            { id: 'cdm', team: 'ally', role: 'CDM', num: 6, kf: [{t:0,x:44,y:32},{t:0.4,x:48,y:30},{t:1,x:55,y:30}] },
+            { id: 'st', team: 'ally', role: 'ST', num: 9, kf: [{t:0,x:74,y:33},{t:0.5,x:76,y:36},{t:1,x:89,y:32}] },
+            { id: 'ocdm', team: 'opp', role: 'CDM', num: 6, kf: [{t:0,x:56,y:24},{t:0.5,x:59,y:27},{t:1,x:66,y:28}] },
+            { id: 'ocm', team: 'opp', role: 'CM', num: 8, kf: [{t:0,x:57,y:40},{t:0.5,x:61,y:39},{t:1,x:68,y:38}] },
+            { id: 'ocb1', team: 'opp', role: 'CB', num: 4, kf: [{t:0,x:78,y:27},{t:0.6,x:75,y:28},{t:1,x:82,y:30}] }
+          ],
+          ball: [
+            { t: 0, x: 45, y: 32 },
+            { t: 0.4, x: 64, y: 26 },
+            { t: 0.68, x: 71, y: 27 },
+            { t: 0.95, x: 88, y: 32 }
+          ],
+          passLines: [
+            { fromT: 0.1, toT: 0.4, x1: 46, y1: 31, x2: 64, y2: 26, type: 'pass' },
+            { fromT: 0.68, toT: 0.95, x1: 71, y1: 27, x2: 88, y2: 32, type: 'pass' }
+          ],
+          quiz: {
+            question: '后腰正准备向前传球，对方两名后腰站得很近，作为前腰你该去哪里接球？',
+            freezeT: 0.2,
+            options: [
+              { id: 'A', x: 64, y: 26, label: 'A. 溜到对方中场和后卫之间的“口袋区”', correct: true, feedback: '大师级球商！在两线之间的空当接球转身，对方防守瞬间就会乱掉！' },
+              { id: 'B', x: 56, y: 24, label: 'B. 站在对方后腰怀里要球', correct: false, feedback: '紧贴着对方后腰，队友一传球就会被断哦！' },
+              { id: 'C', x: 45, y: 40, label: 'C. 退到后腰旁边抢球权', correct: false, feedback: '退太深就没有向前推进的支点了，大胆去前面找空当！' }
+            ]
+          }
+        },
+        {
+          id: 'cam-atk-second',
+          title: '守住弧顶·抢二点球远射',
+          badge: '禁区外炮台',
+          difficulty: 1,
+          summary: '边锋下底传中时，前锋已经冲进小禁区了！前腰不要扎堆挤进去，而是稳稳守在大禁区弧顶，专抢解围出来的“二点球”！',
+          mantra: '「前锋冲门前，前腰守弧顶，二点来一脚！」',
+          visionTips: [
+            '看禁区人数：前点后点有人了，弧顶一定是大空当。',
+            '做好射门准备：身体微微压低，重心在前脚掌，球一出来就能打门！',
+            '也能防反击：守在弧顶，万一没抢到还能第一时间延缓对手反击。'
+          ],
+          steps: [
+            { t: 0.0, title: '1. 跟随进攻到禁区前沿', desc: '左边锋带球下底，前锋已冲向门前，你放慢脚步留在禁区弧顶！', bubble: '我不扎堆，守住弧顶！' },
+            { t: 0.52, title: '2. 预判解围球落点', desc: '传中球被对方中卫勉强顶出禁区，正好滚向大禁区弧顶！', bubble: '二点球来了！' },
+            { t: 0.82, title: '3. 迎球怒射世界波', desc: '迎着来球调整一步，一脚精准贴地斩直挂死角！', bubble: '世界波！进啦！' }
+          ],
+          zones: [
+            { x: 76, y: 33, rx: 6, ry: 7, color: 'rgba(250, 204, 21, 0.3)', border: '#facc15', label: '弧顶二点射门区', fromT: 0.2, toT: 1.0 }
+          ],
+          actors: [
+            { id: 'hero', team: 'ally', role: 'CAM', num: 10, isHero: true, kf: [{t:0,x:64,y:35},{t:0.45,x:74,y:33},{t:0.8,x:77,y:33},{t:1,x:79,y:33}] },
+            { id: 'lw', team: 'ally', role: 'LW', num: 11, kf: [{t:0,x:74,y:10},{t:0.45,x:90,y:10},{t:1,x:90,y:13}] },
+            { id: 'st', team: 'ally', role: 'ST', num: 9, kf: [{t:0,x:78,y:30},{t:0.5,x:89,y:32},{t:1,x:90,y:30}] },
+            { id: 'ocb1', team: 'opp', role: 'CB', num: 4, kf: [{t:0,x:82,y:28},{t:0.55,x:88,y:29},{t:1,x:85,y:31}] },
+            { id: 'ocb2', team: 'opp', role: 'CB2', num: 5, kf: [{t:0,x:84,y:38},{t:0.55,x:89,y:37},{t:1,x:87,y:36}] }
+          ],
+          ball: [
+            { t: 0, x: 75, y: 10 },
+            { t: 0.45, x: 90, y: 11 },
+            { t: 0.62, x: 88, y: 29, loft: true },
+            { t: 0.8, x: 77, y: 33 },
+            { t: 1.0, x: 98, y: 37 }
+          ],
+          passLines: [
+            { fromT: 0.45, toT: 0.62, x1: 90, y1: 11, x2: 88, y2: 29, type: 'pass' },
+            { fromT: 0.62, toT: 0.8, x1: 88, y1: 29, x2: 77, y2: 33, type: 'pass' }
+          ],
+          quiz: {
+            question: '左边锋下底传中，中锋已经冲到门前抢点了，作为前腰你应该停在哪里？',
+            freezeT: 0.4,
+            options: [
+              { id: 'A', x: 89, y: 32, label: 'A. 也冲进小禁区和中锋站一起', correct: false, feedback: '两个人挤在一个点上，后卫解围出来就没人抢二点球啦！' },
+              { id: 'B', x: 76, y: 33, label: 'B. 守在大禁区弧顶等倒三角或二点球', correct: true, feedback: '太懂球了！大禁区弧顶是前腰的“黄金炮台”，经常能捡到超棒的射门机会！' },
+              { id: 'C', x: 52, y: 33, label: 'C. 站在中圈看球', correct: false, feedback: '离禁区太远了，解围出来的球会被对手轻松拿到哦！' }
+            ]
+          }
+        }
+      ],
+      defense: [
+        {
+          id: 'cam-def-shadow',
+          title: '“影子盯人”锁死对方后腰',
+          badge: '聪明防守',
+          difficulty: 2,
+          summary: '对方中卫想把球传给中场发动机（后腰）时，前腰不需要满场飞奔，只要稳稳站在对方后腰身前，切断传球线路！',
+          mantra: '「盯住对手节拍器，断掉中路传球线！」',
+          visionTips: [
+            '随时余光扫一眼身后：确保对方后腰一直被你的“影子”挡住。',
+            '别被假动作骗走：对方中卫横向带球时，我跟着平移保持站位。',
+            '一断球就提速：在这里断下球，离对方球门只有两步远！'
+          ],
+          steps: [
+            { t: 0.0, title: '1. 找到对手组织核心', desc: '看到对方后腰回撤准备接球组织，立刻贴到他身前1米处！', bubble: '盯紧对方6号后腰！' },
+            { t: 0.45, title: '2. 随球平移切断路线', desc: '对方中卫带球横移想找角度传球，你跟着横移，始终挡在传球线上！', bubble: '休想传给中路！' },
+            { t: 0.8, title: '3. 预判上抢直接断球', desc: '对手冒险强行传中路，你提前一步跨出把球稳稳断下！', bubble: '断球！直接反击！' }
+          ],
+          zones: [
+            { x: 64, y: 33, rx: 7, ry: 8, color: 'rgba(239, 68, 68, 0.25)', border: '#ef4444', label: '切断中路接球区', fromT: 0.0, toT: 1.0 }
+          ],
+          actors: [
+            { id: 'hero', team: 'ally', role: 'CAM', num: 10, isHero: true, kf: [{t:0,x:61,y:36},{t:0.45,x:64,y:32},{t:0.8,x:67,y:30},{t:1,x:72,y:30}] },
+            { id: 'st', team: 'ally', role: 'ST', num: 9, kf: [{t:0,x:72,y:26},{t:0.5,x:75,y:29},{t:1,x:80,y:25}] },
+            { id: 'ocb1', team: 'opp', role: 'CB', num: 4, kf: [{t:0,x:81,y:32},{t:0.5,x:79,y:28},{t:1,x:80,y:29}] },
+            { id: 'ocdm', team: 'opp', role: 'CDM', num: 6, kf: [{t:0,x:63,y:38},{t:0.5,x:62,y:32},{t:1,x:64,y:32}] }
+          ],
+          ball: [
+            { t: 0, x: 80, y: 32 },
+            { t: 0.55, x: 78, y: 28 },
+            { t: 0.8, x: 67, y: 30 },
+            { t: 1.0, x: 73, y: 30 }
+          ],
+          passLines: [
+            { fromT: 0.55, toT: 0.8, x1: 78, y1: 28, x2: 67, y2: 30, type: 'pass' }
+          ],
+          quiz: {
+            question: '对方中卫控球，正准备传给无人盯防的6号后腰，作为前腰你最该站在哪？',
+            freezeT: 0.35,
+            options: [
+              { id: 'A', x: 65, y: 31, label: 'A. 挡在中卫和6号后腰的传球线上', correct: true, feedback: '太聪明了！切断对手核心的接球线路，不用拼命跑就能瘫痪对手进攻！' },
+              { id: 'B', x: 78, y: 12, label: 'B. 跑到边线去盯边后卫', correct: false, feedback: '把中路放空了，对手后腰接球转身会直接威胁我们球门！' },
+              { id: 'C', x: 42, y: 33, label: 'C. 退回自己半场', correct: false, feedback: '退得太深，给了对手后腰太轻松的拿球转身空间。' }
+            ]
+          }
+        }
+      ]
+    },
+
+    LW: {
+      attack: [
+        {
+          id: 'lw-atk-cutin',
+          title: '拉边接球·内切射门或分球',
+          badge: '边路爆点',
+          difficulty: 2,
+          summary: '先贴紧边线把对手防线拉宽！接到转移球后，趁边后卫重心在外侧，果断变向内切到右脚射门，或者传给套边的左后卫！',
+          mantra: '「没球踩边线，拿球敢内切，左脚套边可分球！」',
+          visionTips: [
+            '无球时贴边线：站得越宽，球场空间越大，对手越难同时盯两个人。',
+            '观察左后卫：如果左后卫从你身后套边冲上去了，你可以假内切真直塞给他！',
+            '内切后抬头：看远角有没有空当，或者后点有没有插上的右边锋。'
+          ],
+          steps: [
+            { t: 0.0, title: '1. 贴紧边线拉开宽度', desc: '中场拿球时，双脚几乎踩着左边线要球，把对方右后卫拉出来！', bubble: '我贴边线，快转移给我！' },
+            { t: 0.42, title: '2. 接球加速变向内切', desc: '稳稳停球，左后卫从外侧套边吸引防守，你果断向中路内切！', bubble: '套边帮我带走人，我内切！' },
+            { t: 0.8, title: '3. 兜射远角破门', desc: '闪开射门角度，右脚搓出一记漂亮的弧线球直奔远角！', bubble: '兜射远角！' }
+          ],
+          zones: [
+            { x: 78, y: 22, rx: 7, ry: 6, color: 'rgba(250, 204, 21, 0.3)', border: '#facc15', label: '内切射门走廊', fromT: 0.35, toT: 1.0 }
+          ],
+          actors: [
+            { id: 'hero', team: 'ally', role: 'LW', num: 11, isHero: true, kf: [{t:0,x:64,y:7},{t:0.35,x:69,y:8},{t:0.75,x:79,y:21},{t:1,x:82,y:23}] },
+            { id: 'lb', team: 'ally', role: 'LB', num: 3, kf: [{t:0,x:45,y:11},{t:0.5,x:66,y:9},{t:1,x:84,y:8}] },
+            { id: 'cm', team: 'ally', role: 'CM', num: 8, kf: [{t:0,x:50,y:26},{t:0.35,x:54,y:24},{t:1,x:62,y:25}] },
+            { id: 'orb', team: 'opp', role: 'RB', num: 2, kf: [{t:0,x:72,y:13},{t:0.45,x:74,y:12},{t:1,x:82,y:12}] },
+            { id: 'ocb1', team: 'opp', role: 'CB', num: 4, kf: [{t:0,x:79,y:26},{t:0.6,x:81,y:27},{t:1,x:83,y:25}] }
+          ],
+          ball: [
+            { t: 0, x: 51, y: 26 },
+            { t: 0.35, x: 69, y: 9 },
+            { t: 0.78, x: 80, y: 22 },
+            { t: 1.0, x: 98, y: 37 }
+          ],
+          passLines: [
+            { fromT: 0.05, toT: 0.35, x1: 51, y1: 26, x2: 69, y2: 9, type: 'pass' }
+          ],
+          quiz: {
+            question: '中场队友在中路拿球准备分边，作为左边锋你应该先站在哪里要球？',
+            freezeT: 0.15,
+            options: [
+              { id: 'A', x: 66, y: 8, label: 'A. 贴近左边线，把球场空间拉到最大', correct: true, feedback: '太棒了！拉边接球能让对手防线被扯开，你就有充足空间1对1突破或内切！' },
+              { id: 'B', x: 64, y: 27, label: 'B. 挤到中路和前腰站在一起', correct: false, feedback: '大家都挤在中路，对手轻轻一围抢就没空间啦！' },
+              { id: 'C', x: 42, y: 12, label: 'C. 退回后场站着', correct: false, feedback: '进攻时边锋要敢于顶在前面牵制对手后卫！' }
+            ]
+          }
+        },
+        {
+          id: 'lw-atk-farpost',
+          title: '弱侧斜插·后点包抄捡漏',
+          badge: '大局观神跑位',
+          difficulty: 2,
+          summary: '球在右边路进攻时，左边锋千万别看戏！悄悄往禁区后点斜插，当所有后卫都被右边锋吸引时，你就是隐藏的得分王！',
+          mantra: '「球在右边别看戏，斜插后点吃大饼！」',
+          visionTips: [
+            '看球在另一侧：只要右边锋过了人准备传中，立刻冲向远门柱！',
+            '保持后卫盲区：躲在对方右后卫视野背后，他顾着看球根本看不到你。',
+            '抢第二落点：就算前锋没顶到，后点漏出来的球全都是你的！'
+          ],
+          steps: [
+            { t: 0.0, title: '1. 观察右边路突破', desc: '右边锋在右侧带球突破，对方防线全都向右侧移动！', bubble: '右边要传中了，我准备！' },
+            { t: 0.45, title: '2. 悄悄斜插禁区后点', desc: '从左侧边线斜向加速杀入禁区远门柱，甩开盯球的对方右后卫！', bubble: '冲向后点盲区！' },
+            { t: 0.82, title: '3. 后点包抄轻松推射', desc: '传中球越过前点人群飞到后点，迎球一脚推射空门！', bubble: '轻松吃饼！' }
+          ],
+          zones: [
+            { x: 89, y: 22, rx: 6, ry: 7, color: 'rgba(250, 204, 21, 0.3)', border: '#facc15', label: '弱侧后点空当', fromT: 0.25, toT: 1.0 }
+          ],
+          actors: [
+            { id: 'hero', team: 'ally', role: 'LW', num: 11, isHero: true, kf: [{t:0,x:68,y:10},{t:0.45,x:79,y:16},{t:0.82,x:89,y:22},{t:1,x:91,y:23}] },
+            { id: 'rw', team: 'ally', role: 'RW', num: 7, kf: [{t:0,x:72,y:56},{t:0.52,x:89,y:56},{t:1,x:90,y:53}] },
+            { id: 'st', team: 'ally', role: 'ST', num: 9, kf: [{t:0,x:77,y:36},{t:0.55,x:87,y:38},{t:1,x:89,y:37}] },
+            { id: 'orb', team: 'opp', role: 'RB', num: 2, kf: [{t:0,x:77,y:22},{t:0.55,x:83,y:27},{t:1,x:86,y:26}] },
+            { id: 'ocb1', team: 'opp', role: 'CB', num: 4, kf: [{t:0,x:81,y:36},{t:0.55,x:88,y:39},{t:1,x:89,y:38}] }
+          ],
+          ball: [
+            { t: 0, x: 73, y: 56 },
+            { t: 0.52, x: 89, y: 55 },
+            { t: 0.82, x: 89, y: 22, loft: true },
+            { t: 1.0, x: 98, y: 28 }
+          ],
+          passLines: [
+            { fromT: 0.52, toT: 0.82, x1: 89, y1: 55, x2: 89, y2: 22, type: 'pass' }
+          ],
+          quiz: {
+            question: '右边锋正准备下底传中，所有防守队员都挤向了右侧，作为左边锋你该往哪跑？',
+            freezeT: 0.35,
+            options: [
+              { id: 'A', x: 68, y: 10, label: 'A. 留在左边线原地看队友传中', correct: false, feedback: '站在边线太远了，传中球漏到后点你也够不到哦！' },
+              { id: 'B', x: 89, y: 22, label: 'B. 果断斜插进禁区后点包抄', correct: true, feedback: '超级棒的大局观！这就是世界顶级边锋最常用的“弱侧包抄”得分法！' },
+              { id: 'C', x: 84, y: 50, label: 'C. 横穿全场跑到右边锋旁边', correct: false, feedback: '跑到同一侧会把空间挤死，留在后点威胁大得多！' }
+            ]
+          }
+        }
+      ],
+      defense: [
+        {
+          id: 'lw-def-track',
+          title: '积极回追·帮边后卫二防一',
+          badge: '团队守护星',
+          difficulty: 1,
+          summary: '对手右边路发起进攻时，左边锋绝不能偷懒！全速回追保护左后卫，形成“2打1”夹击，让对手边锋无路可走！',
+          mantra: '「丢球全速往回追，帮咱边卫二打一！」',
+          visionTips: [
+            '盯住对方套边的右后卫：别让对手轻松打出边路二过一。',
+            '站位偏内侧：和左后卫形成一前一后夹击，堵死对手内切路线。',
+            '抢下球马上抬头：此时对方右路身后全是空当！'
+          ],
+          steps: [
+            { t: 0.0, title: '1. 发现危险立刻回追', desc: '对方右边锋拿球准备突破我方左后卫，立刻全速往回跑！', bubble: '快回追帮左后卫！' },
+            { t: 0.5, title: '2. 形成2打1夹击', desc: '左后卫正面延缓对手，你从内侧包抄回来，堵住对手内切和回传路线！', bubble: '我封内线，一起夹击！' },
+            { t: 0.85, title: '3. 默契配合成功断球', desc: '对手无处可走被逼失误，你顺势断球发动快攻！', bubble: '断下来了！反击！' }
+          ],
+          zones: [
+            { x: 30, y: 14, rx: 7, ry: 7, color: 'rgba(16, 185, 129, 0.28)', border: '#10b981', label: '2打1夹击区', fromT: 0.35, toT: 1.0 }
+          ],
+          actors: [
+            { id: 'hero', team: 'ally', role: 'LW', num: 11, isHero: true, kf: [{t:0,x:52,y:14},{t:0.5,x:36,y:17},{t:0.85,x:30,y:14},{t:1,x:35,y:13}] },
+            { id: 'lb', team: 'ally', role: 'LB', num: 3, kf: [{t:0,x:27,y:12},{t:0.5,x:26,y:12},{t:1,x:26,y:14}] },
+            { id: 'orw', team: 'opp', role: 'RW', num: 7, kf: [{t:0,x:42,y:11},{t:0.55,x:31,y:12},{t:1,x:31,y:15}] },
+            { id: 'orb', team: 'opp', role: 'RB', num: 2, kf: [{t:0,x:54,y:9},{t:0.6,x:42,y:8},{t:1,x:41,y:10}] }
+          ],
+          ball: [
+            { t: 0, x: 41, y: 11 },
+            { t: 0.55, x: 31, y: 12 },
+            { t: 0.85, x: 30, y: 14 },
+            { t: 1.0, x: 38, y: 12 }
+          ],
+          passLines: [],
+          quiz: {
+            question: '对方右边锋和右后卫在左路形成2打1，我方左后卫快顶不住了，你该怎么办？',
+            freezeT: 0.25,
+            options: [
+              { id: 'A', x: 32, y: 16, label: 'A. 全速回追协防，帮左后卫夹击对手', correct: true, feedback: '最棒的团队精神！足球是团队运动，边锋积极回防能让全队防线稳如泰山！' },
+              { id: 'B', x: 64, y: 12, label: 'B. 留在前场等队友断球', correct: false, feedback: '队友1打2太危险啦，快回去帮忙才能保住球门！' },
+              { id: 'C', x: 40, y: 48, label: 'C. 跑到右边路去', correct: false, feedback: '球在左边路呢，往回追保护左侧才是关键！' }
+            ]
+          }
+        }
+      ]
+    },
+
+    RW: {
+      attack: [
+        {
+          id: 'rw-atk-byline',
+          title: '高速下底·倒三角妙传',
+          badge: '助攻小王子',
+          difficulty: 2,
+          summary: '在右边路拿球利用速度冲向底线！抬头一看门前人多，别盲目往门将怀里踢，回传一脚“倒三角”给插上的队友，进球率超高！',
+          mantra: '「下底别盲目起高球，抬头回敲倒三角！」',
+          visionTips: [
+            '下底前抬头扫一眼禁区：看看中锋和前腰谁在空当里。',
+            '倒三角传球最难防：对方后卫都面向自家球门狂奔，很难转身防回传球！',
+            '保持球权控制：快到底线时急停扣一下，能轻松甩开追防后卫。'
+          ],
+          steps: [
+            { t: 0.0, title: '1. 右路拉边接直塞', desc: '右后卫送出边路直塞，你利用爆发力沿右边线高速超车！', bubble: '加速冲向底线！' },
+            { t: 0.48, title: '2. 急停观察禁区空当', desc: '冲到底线附近抬头一看：对手中卫都退进小禁区了，点球点完全空了！', bubble: '看到前腰插上空当了！' },
+            { t: 0.82, title: '3. 精准倒三角回传助攻', desc: '一脚贴地回敲给点球点附近的队友，轻松推射破门！', bubble: '倒三角妙传！' }
+          ],
+          zones: [
+            { x: 83, y: 36, rx: 6, ry: 6, color: 'rgba(250, 204, 21, 0.32)', border: '#facc15', label: '倒三角绝佳点', fromT: 0.38, toT: 1.0 }
+          ],
+          actors: [
+            { id: 'hero', team: 'ally', role: 'RW', num: 7, isHero: true, kf: [{t:0,x:68,y:56},{t:0.5,x:90,y:57},{t:0.8,x:91,y:54},{t:1,x:89,y:51}] },
+            { id: 'rb', team: 'ally', role: 'RB', num: 2, kf: [{t:0,x:52,y:55},{t:0.5,x:64,y:56},{t:1,x:70,y:55}] },
+            { id: 'cam', team: 'ally', role: 'CAM', num: 10, kf: [{t:0,x:62,y:38},{t:0.5,x:74,y:37},{t:0.85,x:83,y:36},{t:1,x:85,y:35}] },
+            { id: 'st', team: 'ally', role: 'ST', num: 9, kf: [{t:0,x:76,y:33},{t:0.6,x:89,y:28},{t:1,x:90,y:27}] },
+            { id: 'olb', team: 'opp', role: 'LB', num: 3, kf: [{t:0,x:74,y:53},{t:0.55,x:88,y:54},{t:1,x:89,y:50}] },
+            { id: 'ocb2', team: 'opp', role: 'CB2', num: 5, kf: [{t:0,x:80,y:40},{t:0.6,x:89,y:34},{t:1,x:88,y:35}] }
+          ],
+          ball: [
+            { t: 0, x: 53, y: 55 },
+            { t: 0.3, x: 80, y: 57 },
+            { t: 0.55, x: 91, y: 56 },
+            { t: 0.85, x: 83, y: 36 },
+            { t: 1.0, x: 98, y: 31 }
+          ],
+          passLines: [
+            { fromT: 0.05, toT: 0.3, x1: 53, y1: 55, x2: 80, y2: 57, type: 'pass' },
+            { fromT: 0.58, toT: 0.85, x1: 91, y1: 56, x2: 83, y2: 36, type: 'pass' }
+          ],
+          quiz: {
+            question: '你已经高速下底，对方中卫都退守小禁区，前腰正空位插向点球点，你该怎么传？',
+            freezeT: 0.55,
+            options: [
+              { id: 'A', x: 83, y: 36, label: 'A. 抬头贴地回敲“倒三角”给前腰', correct: true, feedback: '助攻大师！倒三角传球让后卫很难转身拦截，队友正对球门一脚就能打进！' },
+              { id: 'B', x: 94, y: 33, label: 'B. 蒙着头往门将怀里踢高球', correct: false, feedback: '门将最喜欢接没有观察的盲目高空球啦！' },
+              { id: 'C', x: 64, y: 56, label: 'C. 直接把球踢回中场', correct: false, feedback: '好不容易下底创造了绝佳机会，勇敢送出致命助攻吧！' }
+            ]
+          }
+        }
+      ],
+      defense: [
+        {
+          id: 'rw-def-compact',
+          title: '球在左路·右边锋内收保护中路',
+          badge: '整体防守大局观',
+          difficulty: 2,
+          summary: '当对手在左侧进攻时，右边锋千万别远远挂在右边线上！向球场中路收缩，帮中场堵住对手横向转移和直塞的通道！',
+          mantra: '「球在那边我内收，全队紧凑像块铁！」',
+          visionTips: [
+            '看球的位置：球在球场另一侧时，我要往中路靠拢，离中线近一点。',
+            '别丢掉对方左后卫：余光瞄着他，如果对手大脚转移，我能马上扑出去！',
+            '保护中场缝隙：帮中场队友分担防守压力，让对手无路可传。'
+          ],
+          steps: [
+            { t: 0.0, title: '1. 观察对手在另一侧控球', desc: '对手正在我方左路组织进攻，此时你在遥远的右边路。', bubble: '球在另一边，我得内收！' },
+            { t: 0.5, title: '2. 向中路紧凑收缩', desc: '迅速向中路收缩10米，堵住对手向中场和右路转移的通道！', bubble: '帮中场封堵转移线！' },
+            { t: 0.85, title: '3. 拦截对手横传转移', desc: '对手试图横传换边，正好被内收站位极佳的你一把断下！', bubble: '漂亮预判！断球反击！' }
+          ],
+          zones: [
+            { x: 46, y: 40, rx: 8, ry: 8, color: 'rgba(16, 185, 129, 0.28)', border: '#10b981', label: '内收协防区域', fromT: 0.2, toT: 1.0 }
+          ],
+          actors: [
+            { id: 'hero', team: 'ally', role: 'RW', num: 7, isHero: true, kf: [{t:0,x:52,y:56},{t:0.5,x:45,y:42},{t:0.85,x:46,y:38},{t:1,x:55,y:40}] },
+            { id: 'cm', team: 'ally', role: 'CM', num: 8, kf: [{t:0,x:42,y:25},{t:0.5,x:38,y:21},{t:1,x:44,y:24}] },
+            { id: 'orw', team: 'opp', role: 'RW', num: 7, kf: [{t:0,x:46,y:14},{t:0.55,x:40,y:16},{t:1,x:43,y:18}] },
+            { id: 'ocam', team: 'opp', role: 'CAM', num: 10, kf: [{t:0,x:52,y:36},{t:0.55,x:49,y:38},{t:1,x:50,y:37}] }
+          ],
+          ball: [
+            { t: 0, x: 45, y: 14 },
+            { t: 0.55, x: 41, y: 17 },
+            { t: 0.85, x: 46, y: 38 },
+            { t: 1.0, x: 58, y: 41 }
+          ],
+          passLines: [
+            { fromT: 0.55, toT: 0.85, x1: 41, y1: 17, x2: 46, y2: 38, type: 'pass' }
+          ],
+          quiz: {
+            question: '对方正在我方左路控球进攻，你在右边锋位置，此时最聪明的防守站位是？',
+            freezeT: 0.3,
+            options: [
+              { id: 'A', x: 54, y: 58, label: 'A. 一直踩着右边线不动', correct: false, feedback: '站得太宽会留给对手中路好大的空当哦！' },
+              { id: 'B', x: 45, y: 41, label: 'B. 向中路内收，帮队友保持紧凑阵型', correct: true, feedback: '大局观满分！球在哪侧全队就向哪侧倾斜，这样对手怎么传都传不进来！' },
+              { id: 'C', x: 20, y: 33, label: 'C. 退进自家小禁区', correct: false, feedback: '退太深会放空整个中场，守在中间区域最合理。' }
+            ]
+          }
+        }
+      ]
+    },
+
+    CM: {
+      attack: [
+        {
+          id: 'cm-atk-triangle',
+          title: '永远制造“三角形接应”',
+          badge: '中场节拍器',
+          difficulty: 1,
+          summary: '中场是全队的大脑！当边后卫拿球被逼抢时，立刻移动到他斜前方的空当，和边锋一起形成“传球三角形”，轻松破解逼抢！',
+          mantra: '「边路受困我来帮，时刻站出三角形！」',
+          visionTips: [
+            '别躲在对手身后：确保持球队友一眼就能直线看到你！',
+            '接球前先观察另一侧：如果右边全空，接球两脚就能完成大范围转移！',
+            '传完球再移动：把球转移出去后，继续前插支援进攻。'
+          ],
+          steps: [
+            { t: 0.0, title: '1. 发现队友被边线包夹', desc: '左后卫拿球遇到对手上抢，你立刻斜向移动，制造干净的接应角度！', bubble: '我来接应，构成三角！' },
+            { t: 0.45, title: '2. 接球抬头看弱侧', desc: '稳稳接住左后卫传球，抬头发现球场右侧完全空了！', bubble: '右边全空，转移！' },
+            { t: 0.82, title: '3. 精准斜长传转移换边', desc: '一脚干脆利落的斜传把球转给右边锋，瞬间撕开对手全部防线！', bubble: '漂亮换边！' }
+          ],
+          zones: [
+            { x: 46, y: 24, rx: 6, ry: 6, color: 'rgba(56, 189, 248, 0.28)', border: '#38bdf8', label: '三角接应点', fromT: 0.0, toT: 0.55 },
+            { x: 68, y: 54, rx: 8, ry: 7, color: 'rgba(250, 204, 21, 0.28)', border: '#facc15', label: '右侧大空当', fromT: 0.45, toT: 1.0 }
+          ],
+          actors: [
+            { id: 'hero', team: 'ally', role: 'CM', num: 8, isHero: true, kf: [{t:0,x:52,y:32},{t:0.38,x:46,y:24},{t:0.7,x:50,y:28},{t:1,x:58,y:32}] },
+            { id: 'lb', team: 'ally', role: 'LB', num: 3, kf: [{t:0,x:32,y:12},{t:0.5,x:36,y:12},{t:1,x:42,y:13}] },
+            { id: 'rw', team: 'ally', role: 'RW', num: 7, kf: [{t:0,x:64,y:54},{t:0.6,x:68,y:55},{t:1,x:78,y:54}] },
+            { id: 'orw', team: 'opp', role: 'RW', num: 7, kf: [{t:0,x:40,y:14},{t:0.4,x:36,y:13},{t:1,x:44,y:18}] },
+            { id: 'ocm', team: 'opp', role: 'CM', num: 8, kf: [{t:0,x:54,y:22},{t:0.5,x:52,y:23},{t:1,x:57,y:34}] }
+          ],
+          ball: [
+            { t: 0, x: 33, y: 12 },
+            { t: 0.4, x: 46, y: 24 },
+            { t: 0.58, x: 49, y: 27 },
+            { t: 0.88, x: 70, y: 55, loft: true },
+            { t: 1.0, x: 79, y: 54 }
+          ],
+          passLines: [
+            { fromT: 0.08, toT: 0.4, x1: 33, y1: 12, x2: 46, y2: 24, type: 'pass' },
+            { fromT: 0.58, toT: 0.88, x1: 49, y1: 27, x2: 70, y2: 55, type: 'pass' }
+          ],
+          quiz: {
+            question: '你在左路接球摆脱了逼抢，发现对手全挤在左侧，而右侧边锋无人盯防，你该怎么踢？',
+            freezeT: 0.5,
+            options: [
+              { id: 'A', x: 70, y: 54, label: 'A. 果断转移到右侧大空当找右边锋', correct: true, feedback: '像哈维、莫德里奇一样的大师视野！把球传到人最少的地方，进攻瞬间海阔天空！' },
+              { id: 'B', x: 40, y: 14, label: 'B. 硬往人堆里带球突破', correct: false, feedback: '左侧站满了防守队员，硬闯很容易丢球打反击哦！' },
+              { id: 'C', x: 10, y: 33, label: 'C. 大脚回传给自家门将', correct: false, feedback: '前面右侧这么大空当，勇敢向前转移换边吧！' }
+            ]
+          }
+        },
+        {
+          id: 'cm-atk-late',
+          title: '后排突然前插（B2B冲击）',
+          badge: '隐藏杀手',
+          difficulty: 2,
+          summary: '当对方中卫都被我方前锋牵制住时，中场球员从后排突然加速冲进禁区！防守球员根本来不及反应，轻松接球打门！',
+          mantra: '「前锋拉走中卫线，中场后排突然现！」',
+          visionTips: [
+            '看前锋位置：当前锋把中卫拉向一侧，中路就会裂开一条缝！',
+            '把握启动时机：不要太早冲进去站着等，而是高速冲刺进去“人到球到”！',
+            '提醒后腰补位：我前插时，后腰队友留在后面保护安全。'
+          ],
+          steps: [
+            { t: 0.0, title: '1. 观察前锋拉扯防线', desc: '左边锋持球，中锋向远端跑动带走中卫，中路肋部露出一条通道！', bubble: '中路裂开缝隙了！' },
+            { t: 0.45, title: '2. 后排全速前插禁区', desc: '从二线突然加速冲过对手中场，直插禁区腹地！', bubble: '后排插上，传前面！' },
+            { t: 0.82, title: '3. 迎球推射一击致命', desc: '人到球到，顺势一脚推射破门，对手完全措手不及！', bubble: '后排插上得分！' }
+          ],
+          zones: [
+            { x: 84, y: 27, rx: 6, ry: 7, color: 'rgba(250, 204, 21, 0.3)', border: '#facc15', label: '后排插上空当', fromT: 0.3, toT: 1.0 }
+          ],
+          actors: [
+            { id: 'hero', team: 'ally', role: 'CM', num: 8, isHero: true, kf: [{t:0,x:55,y:25},{t:0.45,x:71,y:26},{t:0.82,x:84,y:27},{t:1,x:87,y:28}] },
+            { id: 'lw', team: 'ally', role: 'LW', num: 11, kf: [{t:0,x:68,y:12},{t:0.55,x:77,y:14},{t:1,x:80,y:16}] },
+            { id: 'st', team: 'ally', role: 'ST', num: 9, kf: [{t:0,x:78,y:33},{t:0.5,x:84,y:41},{t:1,x:88,y:43}] },
+            { id: 'ocb1', team: 'opp', role: 'CB', num: 4, kf: [{t:0,x:80,y:29},{t:0.55,x:83,y:37},{t:1,x:86,y:38}] },
+            { id: 'ocm', team: 'opp', role: 'CM', num: 8, kf: [{t:0,x:64,y:28},{t:0.55,x:69,y:30},{t:1,x:75,y:30}] }
+          ],
+          ball: [
+            { t: 0, x: 69, y: 12 },
+            { t: 0.55, x: 77, y: 15 },
+            { t: 0.82, x: 84, y: 27 },
+            { t: 1.0, x: 98, y: 31 }
+          ],
+          passLines: [
+            { fromT: 0.55, toT: 0.82, x1: 77, y1: 15, x2: 84, y2: 27, type: 'pass' }
+          ],
+          quiz: {
+            question: '中锋跑向右侧带走了对手中卫，左边锋正抬头看禁区，作为中场你该怎么跑？',
+            freezeT: 0.35,
+            options: [
+              { id: 'A', x: 84, y: 27, label: 'A. 后排突然加速直插中路空当', correct: true, feedback: '太致命了！后排插上是最难防的进攻武器，对手后卫根本跟不上你的节奏！' },
+              { id: 'B', x: 52, y: 25, label: 'B. 站在中圈原地看戏', correct: false, feedback: '中路这么大一个空当，果断前插就能制造绝佳进球机会！' },
+              { id: 'C', x: 76, y: 12, label: 'C. 跑到左边锋脚下抢球', correct: false, feedback: '别去抢队友空间，冲向禁区空当接他的传球吧！' }
+            ]
+          }
+        }
+      ],
+      defense: [
+        {
+          id: 'cm-def-press',
+          title: '中场协同协防·守住传球夹角',
+          badge: '中场铁闸',
+          difficulty: 2,
+          summary: '当后腰上去逼抢对手持球人时，中场队友要立刻退半步保护他身后，形成“一上抢、一保护”的防守搭档！',
+          mantra: '「你上抢来我保护，绝不让人打穿中路！」',
+          visionTips: [
+            '看搭档动作：搭档冲上去抢球，我就绝对不能同时冲上去！',
+            '封住直塞角度：站位刚好堵住对手往我方前锋身后传球的通道。',
+            '大声沟通：喊一句“你上，我保护！”，队友防守会更有底气！'
+          ],
+          steps: [
+            { t: 0.0, title: '1. 观察搭档上抢', desc: '对方中场拿球推进，我方后腰冲上去正面延缓对手。', bubble: '你去延缓，我来保护！' },
+            { t: 0.45, title: '2. 斜向退步卡住身后', desc: '你斜向回撤两步，卡在搭档身后和对方前腰之间，封堵直塞路线！', bubble: '封死直塞通道！' },
+            { t: 0.85, title: '3. 轻松收下被逼出的球', desc: '对手被逼无奈勉强横传或趟大，你正好上前一步稳稳收下球权！', bubble: '完美协防断球！' }
+          ],
+          zones: [
+            { x: 42, y: 29, rx: 7, ry: 7, color: 'rgba(16, 185, 129, 0.28)', border: '#10b981', label: '斜后方保护区', fromT: 0.15, toT: 1.0 }
+          ],
+          actors: [
+            { id: 'hero', team: 'ally', role: 'CM', num: 8, isHero: true, kf: [{t:0,x:48,y:24},{t:0.45,x:42,y:29},{t:0.85,x:43,y:32},{t:1,x:49,y:30}] },
+            { id: 'cdm', team: 'ally', role: 'CDM', num: 6, kf: [{t:0,x:45,y:36},{t:0.45,x:48,y:36},{t:1,x:46,y:37}] },
+            { id: 'ocm', team: 'opp', role: 'CM', num: 8, kf: [{t:0,x:55,y:36},{t:0.5,x:51,y:36},{t:1,x:50,y:37}] },
+            { id: 'ocam', team: 'opp', role: 'CAM', num: 10, kf: [{t:0,x:38,y:27},{t:0.5,x:36,y:28},{t:1,x:37,y:29}] }
+          ],
+          ball: [
+            { t: 0, x: 54, y: 36 },
+            { t: 0.5, x: 50, y: 36 },
+            { t: 0.85, x: 43, y: 32 },
+            { t: 1.0, x: 52, y: 29 }
+          ],
+          passLines: [
+            { fromT: 0.55, toT: 0.85, x1: 50, y1: 36, x2: 43, y2: 32, type: 'pass' }
+          ],
+          quiz: {
+            question: '我方后腰已经冲上去正面逼抢对方持球中场了，作为中场搭档你该站在哪？',
+            freezeT: 0.3,
+            options: [
+              { id: 'A', x: 50, y: 36, label: 'A. 和后腰一起扑到同一个人身上', correct: false, feedback: '两个人一起扑，只要对手轻轻一传，身后就全空啦！' },
+              { id: 'B', x: 42, y: 29, label: 'B. 退半步卡在斜后方保护传球路线', correct: true, feedback: '防守大师！一上抢、一保护，这就是职业球队最稳固的“防守层次”！' },
+              { id: 'C', x: 64, y: 15, label: 'C. 往前跑等反击', correct: false, feedback: '还没断下球呢，先帮队友守住中路安全！' }
+            ]
+          }
+        }
+      ]
+    },
+
+    CDM: {
+      attack: [
+        {
+          id: 'cdm-atk-buildup',
+          title: '后场接应·帮中卫破解高压',
+          badge: '防线前的定海神针',
+          difficulty: 2,
+          summary: '当门将和中卫在后场开球遇到对手逼抢时，后腰要主动左右横移甩开盯人，跑到两名对方前锋的“夹缝中间”接球！',
+          mantra: '「躲开影子找夹缝，接球一顺破逼抢！」',
+          visionTips: [
+            '别一直站着不动：左晃一步再右移一步，才能甩开盯防你的前腰。',
+            '先看身后有没有人：如果身后没人贴防，直接半转身向前推进！',
+            '如果身后有人紧贴：一脚回做给边后卫或另一名中卫，绝不冒险丢球！'
+          ],
+          steps: [
+            { t: 0.0, title: '1. 甩开对手影子', desc: '中卫控球，对方前锋挡住了传球线，你向右跨两步闪出空当！', bubble: '往右闪出传球路线！' },
+            { t: 0.45, title: '2. 接球半转身观察', desc: '稳稳接住中卫的贴地直传，提前观察过身后没人，顺势转身！', bubble: '身后安全，转身推进！' },
+            { t: 0.82, title: '3. 向前分球发起进攻', desc: '一脚干脆的直传找到前面的前腰，轻松破解对手全场逼抢！', bubble: '打穿第一道防线！' }
+          ],
+          zones: [
+            { x: 38, y: 38, rx: 6, ry: 6, color: 'rgba(56, 189, 248, 0.28)', border: '#38bdf8', label: '接应空当窗', fromT: 0.15, toT: 0.65 }
+          ],
+          actors: [
+            { id: 'hero', team: 'ally', role: 'CDM', num: 6, isHero: true, kf: [{t:0,x:38,y:28},{t:0.38,x:38,y:39},{t:0.7,x:45,y:38},{t:1,x:50,y:36}] },
+            { id: 'cb', team: 'ally', role: 'CB', num: 4, kf: [{t:0,x:22,y:34},{t:0.4,x:24,y:36},{t:1,x:30,y:35}] },
+            { id: 'cam', team: 'ally', role: 'CAM', num: 10, kf: [{t:0,x:58,y:36},{t:0.6,x:61,y:37},{t:1,x:68,y:34}] },
+            { id: 'ost', team: 'opp', role: 'ST', num: 9, kf: [{t:0,x:34,y:31},{t:0.5,x:33,y:34},{t:1,x:40,y:35}] },
+            { id: 'ocam', team: 'opp', role: 'CAM', num: 10, kf: [{t:0,x:44,y:28},{t:0.55,x:44,y:34},{t:1,x:49,y:35}] }
+          ],
+          ball: [
+            { t: 0, x: 23, y: 34 },
+            { t: 0.42, x: 38, y: 39 },
+            { t: 0.65, x: 45, y: 38 },
+            { t: 0.92, x: 64, y: 36 }
+          ],
+          passLines: [
+            { fromT: 0.1, toT: 0.42, x1: 24, y1: 35, x2: 38, y2: 39, type: 'pass' },
+            { fromT: 0.65, toT: 0.92, x1: 45, y1: 38, x2: 64, y2: 36, type: 'pass' }
+          ],
+          quiz: {
+            question: '中卫后场拿球，对方前锋正挡在你和中卫之间，作为后腰你应该怎么做？',
+            freezeT: 0.2,
+            options: [
+              { id: 'A', x: 38, y: 28, label: 'A. 留在对方前锋后面不动', correct: false, feedback: '躲在对手“影子”里，中卫根本传不到你脚下哦！' },
+              { id: 'B', x: 38, y: 39, label: 'B. 横向移动两步，闪出干净的传球通道', correct: true, feedback: '像布斯克茨、罗德里一样聪明！主动跑出传球窗口，中卫一下子就轻松了！' },
+              { id: 'C', x: 65, y: 33, label: 'C. 冲到前锋线去', correct: false, feedback: '后腰跑远了，后场就没有出球枢纽啦！' }
+            ]
+          }
+        }
+      ],
+      defense: [
+        {
+          id: 'cdm-def-cover',
+          title: '守住防线身前·封堵致命直塞',
+          badge: '防线保护伞',
+          difficulty: 2,
+          summary: '后腰是中卫身前最靠谱的保护伞！对手在禁区前沿控球时，稳稳守在两名中卫身前的“黄金红区”，决不让对手轻松起脚远射或送直塞！',
+          mantra: '「稳坐中军保中卫，封死禁区前沿区！」',
+          visionTips: [
+            '保护“14号区域”：大禁区弧顶前这块草地是对手最喜欢传威胁球的地方，死守这里！',
+            '补边后卫空当：如果我方边后卫冲上去进攻没回来，立刻斜移帮他补位。',
+            '稳字当头：不要轻易倒地滑铲，保持重心站在球和球门之间！'
+          ],
+          steps: [
+            { t: 0.0, title: '1. 迅速退回中卫身前', desc: '对手反击推进到中场，你全速回到我方禁区弧顶前的关键区域！', bubble: '快守住禁区前沿！' },
+            { t: 0.45, title: '2. 封堵对方前腰接球', desc: '横向移动卡住对方前腰和球之间的传球线路，延缓对手推进！', bubble: '不让你轻松直塞！' },
+            { t: 0.82, title: '3. 拦截贴地直塞化解危机', desc: '精准预判对手直塞球，伸脚一断，稳稳把球交给队友！', bubble: '漂亮拦截！危机解除！' }
+          ],
+          zones: [
+            { x: 32, y: 33, rx: 7, ry: 9, color: 'rgba(239, 68, 68, 0.25)', border: '#ef4444', label: '禁区前必守红区', fromT: 0.0, toT: 1.0 }
+          ],
+          actors: [
+            { id: 'hero', team: 'ally', role: 'CDM', num: 6, isHero: true, kf: [{t:0,x:40,y:28},{t:0.45,x:32,y:33},{t:0.82,x:31,y:35},{t:1,x:36,y:32}] },
+            { id: 'cb1', team: 'ally', role: 'CB', num: 4, kf: [{t:0,x:22,y:26},{t:0.6,x:20,y:27},{t:1,x:22,y:26}] },
+            { id: 'cb2', team: 'ally', role: 'CB2', num: 5, kf: [{t:0,x:22,y:40},{t:0.6,x:20,y:39},{t:1,x:22,y:40}] },
+            { id: 'ocam', team: 'opp', role: 'CAM', num: 10, kf: [{t:0,x:48,y:34},{t:0.55,x:40,y:35},{t:1,x:41,y:36}] },
+            { id: 'ost', team: 'opp', role: 'ST', num: 9, kf: [{t:0,x:28,y:36},{t:0.6,x:24,y:37},{t:1,x:26,y:36}] }
+          ],
+          ball: [
+            { t: 0, x: 47, y: 34 },
+            { t: 0.55, x: 39, y: 35 },
+            { t: 0.82, x: 31, y: 35 },
+            { t: 1.0, x: 39, y: 29 }
+          ],
+          passLines: [
+            { fromT: 0.55, toT: 0.82, x1: 39, y1: 35, x2: 31, y2: 35, type: 'pass' }
+          ],
+          quiz: {
+            question: '对手快速推进到禁区前准备送直塞找前锋，作为后腰你最应该守住哪块草地？',
+            freezeT: 0.3,
+            options: [
+              { id: 'A', x: 32, y: 33, label: 'A. 禁区弧顶前沿，挡住直塞和中路射门', correct: true, feedback: '稳如泰山！守住中卫身前这块区域，对手最危险的直塞和远射就全废了！' },
+              { id: 'B', x: 35, y: 10, label: 'B. 跑到边线附近', correct: false, feedback: '中路大开空门，对手直接一脚就能打穿禁区！' },
+              { id: 'C', x: 14, y: 33, label: 'C. 退到门将身前挡住门将视线', correct: false, feedback: '退太深不仅挡住门将，还会让对手在弧顶轻松起脚远射！' }
+            ]
+          }
+        }
+      ]
+    },
+
+    LB: {
+      attack: [
+        {
+          id: 'lb-atk-overlap',
+          title: '边锋内切·左后卫高速套边',
+          badge: '现代进攻边卫',
+          difficulty: 2,
+          summary: '当左边锋拿球向中路内切时，左边线瞬间空出一整条“高速跑道”！左后卫大喊一声“我套边！”，全速从外侧冲上去接直塞传中！',
+          mantra: '「边锋一内切，边卫快套边，外线超车去传中！」',
+          visionTips: [
+            '看左边锋动作：只要他把球往里带，外线走廊就是你的！',
+            '大声喊队友：喊出“我套边！”，这样边锋不用回头就知道你冲上来了！',
+            '注意体能与回防：传中完如果球丢了，要立刻全速回防自己的防区。'
+          ],
+          steps: [
+            { t: 0.0, title: '1. 观察左边锋内切', desc: '左边锋接球向中路内切，把对方右后卫吸引到了里侧！', bubble: '外线空了，我套边！' },
+            { t: 0.45, title: '2. 外线全速套边超车', desc: '沿着左边线全速冲过左边锋身旁，直接甩开所有防守队员！', bubble: '传前面，我冲上来了！' },
+            { t: 0.8, title: '3. 接直塞轻松下底传中', desc: '顺着步点接到直塞球，无人干扰地送出高质量传中！', bubble: '舒服传中给中锋！' }
+          ],
+          zones: [
+            { x: 82, y: 10, rx: 8, ry: 5, color: 'rgba(250, 204, 21, 0.3)', border: '#facc15', label: '套边高速走廊', fromT: 0.25, toT: 1.0 }
+          ],
+          actors: [
+            { id: 'hero', team: 'ally', role: 'LB', num: 3, isHero: true, kf: [{t:0,x:48,y:10},{t:0.45,x:68,y:8},{t:0.8,x:86,y:10},{t:1,x:89,y:12}] },
+            { id: 'lw', team: 'ally', role: 'LW', num: 11, kf: [{t:0,x:65,y:13},{t:0.48,x:71,y:21},{t:1,x:75,y:22}] },
+            { id: 'st', team: 'ally', role: 'ST', num: 9, kf: [{t:0,x:76,y:33},{t:0.6,x:86,y:31},{t:1,x:90,y:31}] },
+            { id: 'orb', team: 'opp', role: 'RB', num: 2, kf: [{t:0,x:73,y:16},{t:0.55,x:76,y:22},{t:1,x:83,y:18}] }
+          ],
+          ball: [
+            { t: 0, x: 65, y: 13 },
+            { t: 0.48, x: 71, y: 21 },
+            { t: 0.78, x: 86, y: 10 },
+            { t: 1.0, x: 90, y: 31, loft: true }
+          ],
+          passLines: [
+            { fromT: 0.48, toT: 0.78, x1: 71, y1: 21, x2: 86, y2: 10, type: 'pass' },
+            { fromT: 0.8, toT: 1.0, x1: 86, y1: 10, x2: 90, y2: 31, type: 'pass' }
+          ],
+          quiz: {
+            question: '左边锋带球向中路内切，把对方右后卫也带进去了，作为左后卫你该往哪跑？',
+            freezeT: 0.35,
+            options: [
+              { id: 'A', x: 84, y: 9, label: 'A. 沿左边线外侧高速套边冲刺', correct: true, feedback: '太帅了！这就是经典的边路“套边配合（Overlap）”，对手完全顾此失彼！' },
+              { id: 'B', x: 70, y: 24, label: 'B. 跟着边锋一起往中路挤', correct: false, feedback: '都挤在中路就把外线大走廊浪费啦！' },
+              { id: 'C', x: 25, y: 12, label: 'C. 退回自家禁区不动', correct: false, feedback: '机会这么好，果断前插支援进攻才能帮球队打破僵局！' }
+            ]
+          }
+        }
+      ],
+      defense: [
+        {
+          id: 'lb-def-tuck',
+          title: '球在右路·左后卫内收保护中路',
+          badge: '防线铁律',
+          difficulty: 2,
+          summary: '对手在球场右侧进攻时，左后卫千万别远远留在左边线！立刻向禁区中路收缩，帮中卫保护门前，防止对手传中偷袭后点！',
+          mantra: '「球在右边我收中，保护后点防偷袭！」',
+          visionTips: [
+            '和中卫保持约8-10米距离：防线像拉紧的绳子一起左右移动。',
+            '侧身站位：既能看到球，又能用余光看到准备偷袭后点的对手右边锋！',
+            '争顶卡内线：对手传中时，抢在对方前锋内侧把球顶出危险区！'
+          ],
+          steps: [
+            { t: 0.0, title: '1. 看到对手右路起势', desc: '对手在我方右侧边路带球推进，我方右后卫和中卫已向右移动。', bubble: '球在另一边，我要内收！' },
+            { t: 0.48, title: '2. 内收进禁区保护后点', desc: '迅速从左边线内收到小禁区角附近，牢牢盯住对方偷袭后点的球员！', bubble: '卡住内线，盯紧后点！' },
+            { t: 0.85, title: '3. 抢先头球解围', desc: '对手传中飞向后点，因为你提前内收卡住位置，轻松抢先解围！', bubble: '稳稳解围！' }
+          ],
+          zones: [
+            { x: 16, y: 24, rx: 6, ry: 7, color: 'rgba(16, 185, 129, 0.3)', border: '#10b981', label: '后点保护区', fromT: 0.2, toT: 1.0 }
+          ],
+          actors: [
+            { id: 'hero', team: 'ally', role: 'LB', num: 3, isHero: true, kf: [{t:0,x:24,y:11},{t:0.48,x:17,y:22},{t:0.85,x:14,y:24},{t:1,x:16,y:23}] },
+            { id: 'cb1', team: 'ally', role: 'CB', num: 4, kf: [{t:0,x:20,y:30},{t:0.5,x:15,y:35},{t:1,x:15,y:34}] },
+            { id: 'rb', team: 'ally', role: 'RB', num: 2, kf: [{t:0,x:22,y:53},{t:0.5,x:14,y:55},{t:1,x:14,y:52}] },
+            { id: 'olw', team: 'opp', role: 'LW', num: 11, kf: [{t:0,x:28,y:55},{t:0.52,x:12,y:56},{t:1,x:13,y:53}] },
+            { id: 'orw', team: 'opp', role: 'RW', num: 7, kf: [{t:0,x:30,y:14},{t:0.55,x:17,y:20},{t:1,x:15,y:22}] }
+          ],
+          ball: [
+            { t: 0, x: 27, y: 55 },
+            { t: 0.52, x: 12, y: 56 },
+            { t: 0.85, x: 14, y: 24, loft: true },
+            { t: 1.0, x: 34, y: 15, loft: true }
+          ],
+          passLines: [
+            { fromT: 0.52, toT: 0.85, x1: 12, y1: 56, x2: 14, y2: 24, type: 'pass' }
+          ],
+          quiz: {
+            question: '对手在我方右侧下底准备传中，中卫已经去防前点了，作为左后卫你该站在哪？',
+            freezeT: 0.4,
+            options: [
+              { id: 'A', x: 24, y: 8, label: 'A. 留在左边线外侧看球', correct: false, feedback: '留在边线离球门太远了，后点空当会被对手轻松头球破门！' },
+              { id: 'B', x: 15, y: 23, label: 'B. 迅速内收到禁区后点保护并卡住内线', correct: true, feedback: '太专业了！弱侧边后卫内收保护后点，是防传中最关键的一课！' },
+              { id: 'C', x: 14, y: 46, label: 'C. 冲到右侧去帮右后卫', correct: false, feedback: '右后卫和中卫已经在右侧了，守住后点才是你的职责！' }
+            ]
+          }
+        }
+      ]
+    },
+
+    RB: {
+      attack: [
+        {
+          id: 'rb-atk-support',
+          title: '后场拉宽接应·向前送边路直塞',
+          badge: '出球好帮手',
+          difficulty: 1,
+          summary: '中卫在后场拿球时，右后卫要迅速贴近右边线并稍微前压，拉大传球角度！接球后直接顺着边线找右边锋或内切中场！',
+          mantra: '「中卫拿球我拉宽，接球抬头找边锋！」',
+          visionTips: [
+            '站得比中卫靠前一点：这样接球后自然面向对手半场，更容易向前传球。',
+            '双脚打开侧身接球：用远端脚（左脚）停球，一眼就能看清整条右边路。',
+            '发现右边锋被贴死时，可以找斜前方的中场或前腰打撞墙！'
+          ],
+          steps: [
+            { t: 0.0, title: '1. 贴边前压拉开宽度', desc: '中卫后场拿球，你迅速贴向右边线并前压几米，给中卫提供安全的出球点！', bubble: '拉宽位置，传给我！' },
+            { t: 0.42, title: '2. 侧身接球向前观察', desc: '舒服停下中卫传球，吸引对手左边锋扑抢，瞬间拉开边路身后空当！', bubble: '对手扑上来了，找边锋！' },
+            { t: 0.8, title: '3. 贴地直塞打穿边路', desc: '一脚干脆的边线直塞交给高速前插的右边锋，轻松推进到前场！', bubble: '直塞边路！冲呀！' }
+          ],
+          zones: [
+            { x: 42, y: 56, rx: 7, ry: 5, color: 'rgba(56, 189, 248, 0.28)', border: '#38bdf8', label: '边卫出球站位', fromT: 0.0, toT: 0.6 }
+          ],
+          actors: [
+            { id: 'hero', team: 'ally', role: 'RB', num: 2, isHero: true, kf: [{t:0,x:28,y:52},{t:0.38,x:42,y:56},{t:0.7,x:48,y:56},{t:1,x:58,y:55}] },
+            { id: 'cb', team: 'ally', role: 'CB', num: 4, kf: [{t:0,x:22,y:40},{t:0.4,x:25,y:41},{t:1,x:32,y:41}] },
+            { id: 'rw', team: 'ally', role: 'RW', num: 7, kf: [{t:0,x:62,y:55},{t:0.55,x:68,y:56},{t:1,x:80,y:54}] },
+            { id: 'olw', team: 'opp', role: 'LW', num: 11, kf: [{t:0,x:50,y:48},{t:0.55,x:47,y:54},{t:1,x:54,y:53}] }
+          ],
+          ball: [
+            { t: 0, x: 23, y: 40 },
+            { t: 0.4, x: 42, y: 56 },
+            { t: 0.65, x: 48, y: 56 },
+            { t: 0.95, x: 78, y: 55 }
+          ],
+          passLines: [
+            { fromT: 0.08, toT: 0.4, x1: 23, y1: 40, x2: 42, y2: 56, type: 'pass' },
+            { fromT: 0.65, toT: 0.95, x1: 48, y1: 56, x2: 78, y2: 55, type: 'pass' }
+          ],
+          quiz: {
+            question: '我方中卫拿球组织进攻，作为右后卫你应该移动到哪里接应最合适？',
+            freezeT: 0.2,
+            options: [
+              { id: 'A', x: 42, y: 56, label: 'A. 贴近右边线并稍微前压，打开角度', correct: true, feedback: '太棒了！拉宽且前压，既安全又能立刻把球向前推进！' },
+              { id: 'B', x: 24, y: 45, label: 'B. 紧紧贴在中卫旁边', correct: false, feedback: '离中卫太近，一个对手就能同时防住你们俩！' },
+              { id: 'C', x: 44, y: 33, label: 'C. 跑到球场正中间', correct: false, feedback: '把右边路空间放空了，拉宽球场才能扯开对手防线！' }
+            ]
+          }
+        }
+      ],
+      defense: [
+        {
+          id: 'rb-def-1v1',
+          title: '边路1对1·封内线逼外线',
+          badge: '单防小专家',
+          difficulty: 2,
+          summary: '面对对方左边锋单挑时，记住黄金法则：侧身站位、压低重心，绝不让他往中路内切射门，把他逼向危险最小的右边线！',
+          mantra: '「侧身降重心，放外不放内，逼他走边线！」',
+          visionTips: [
+            '距离保持约1.5米：太近容易一步被过，太远对手会直接起脚传中。',
+            '紧盯球不盯假动作：对手肩膀怎么晃都不怕，只看球往哪动！',
+            '用边线当帮手：把对手逼到边线窄缝里，等队友回来一起抢！'
+          ],
+          steps: [
+            { t: 0.0, title: '1. 迅速贴近减速降重心', desc: '对方左边锋拿球准备单挑，迅速靠近到1.5米处，侧身压低重心！', bubble: '侧身站位，封死内线！' },
+            { t: 0.48, title: '2. 封死内切赶向边线', desc: '身体始终挡在对手和球门之间，逼着他只能沿着右边线往底角带！', bubble: '只让你走边线！' },
+            { t: 0.85, title: '3. 抓住趟大瞬间干净断球', desc: '对手被逼到边线空间越来越小，稍微一趟大立刻伸脚把球破坏出界或断下！', bubble: '干净断球！' }
+          ],
+          zones: [
+            { x: 26, y: 42, rx: 6, ry: 6, color: 'rgba(239, 68, 68, 0.25)', border: '#ef4444', label: '绝不让对手内切', fromT: 0.0, toT: 0.8 }
+          ],
+          actors: [
+            { id: 'hero', team: 'ally', role: 'RB', num: 2, isHero: true, kf: [{t:0,x:28,y:49},{t:0.45,x:24,y:50},{t:0.85,x:17,y:54},{t:1,x:19,y:53}] },
+            { id: 'cb2', team: 'ally', role: 'CB2', num: 5, kf: [{t:0,x:22,y:40},{t:0.5,x:18,y:42},{t:1,x:18,y:41}] },
+            { id: 'olw', team: 'opp', role: 'LW', num: 11, kf: [{t:0,x:36,y:53},{t:0.5,x:25,y:55},{t:0.85,x:18,y:57},{t:1,x:17,y:58}] }
+          ],
+          ball: [
+            { t: 0, x: 35, y: 53 },
+            { t: 0.5, x: 25, y: 55 },
+            { t: 0.85, x: 18, y: 56 },
+            { t: 1.0, x: 24, y: 51 }
+          ],
+          passLines: [],
+          quiz: {
+            question: '对方左边锋带球一对一冲向你，你想防住他，应该把身体挡在哪一侧？',
+            freezeT: 0.35,
+            options: [
+              { id: 'A', x: 25, y: 48, label: 'A. 挡住内侧中路，逼他往边线外侧走', correct: true, feedback: '标准教科书式单防！边线外面没球门，把他赶到边线就安全多了！' },
+              { id: 'B', x: 25, y: 58, label: 'B. 挡住边线，放他往禁区中路内切', correct: false, feedback: '千万别放对手内切！进到中路他直接就能面对球门射门啦！' },
+              { id: 'C', x: 34, y: 53, label: 'C. 全速猛冲上去直接飞铲', correct: false, feedback: '盲目猛冲很容易被对手轻轻一扣就过掉，稳住重心最重要！' }
+            ]
+          }
+        }
+      ]
+    },
+
+    CB: {
+      attack: [
+        {
+          id: 'cb-atk-split',
+          title: '门将开球·中卫拉开宽度接应',
+          badge: '后场司令官',
+          difficulty: 1,
+          summary: '门将准备发球时，中卫不要傻傻站在门将正前方！迅速向禁区两侧拉开宽度，把对方前锋扯开，就能稳稳把球从后场传出来！',
+          mantra: '「门将开球我拉开，带球向前引防守！」',
+          visionTips: [
+            '拉开角度：站到小禁区角外侧，让对方一名前锋没法同时防住两个人。',
+            '敢于向前带两步：如果前面没人逼抢你，大胆带球推进，逼对手上来再传球！',
+            '抬头找远处：先看前锋和中场有没有直传机会，没有再稳妥分边。'
+          ],
+          steps: [
+            { t: 0.0, title: '1. 向两侧拉开接应', desc: '门将拿球准备组织，两名中卫立刻向禁区左右两侧拉开站位！', bubble: '拉开宽度，给我球！' },
+            { t: 0.42, title: '2. 带球向前吸引逼抢', desc: '接球后发现前面空无一人，大胆向前带两步，把对方前锋吸引过来！', bubble: '没人抢？我带球推进！' },
+            { t: 0.8, title: '3. 冷静分球撕开防线', desc: '趁对方前锋扑向你，稳稳一脚直传交给露出的中场或边路队友！', bubble: '对手上钩了，分球！' }
+          ],
+          zones: [
+            { x: 22, y: 20, rx: 7, ry: 6, color: 'rgba(56, 189, 248, 0.28)', border: '#38bdf8', label: '中卫拉开接球区', fromT: 0.0, toT: 0.55 }
+          ],
+          actors: [
+            { id: 'hero', team: 'ally', role: 'CB', num: 4, isHero: true, kf: [{t:0,x:17,y:28},{t:0.35,x:21,y:20},{t:0.7,x:32,y:21},{t:1,x:36,y:23}] },
+            { id: 'gk', team: 'ally', role: 'GK', num: 1, isGK: true, kf: [{t:0,x:6,y:33},{t:0.4,x:7,y:31},{t:1,x:9,y:32}] },
+            { id: 'cm', team: 'ally', role: 'CM', num: 8, kf: [{t:0,x:48,y:22},{t:0.6,x:52,y:19},{t:1,x:58,y:19}] },
+            { id: 'ost', team: 'opp', role: 'ST', num: 9, kf: [{t:0,x:32,y:32},{t:0.55,x:36,y:25},{t:1,x:40,y:24}] }
+          ],
+          ball: [
+            { t: 0, x: 7, y: 33 },
+            { t: 0.35, x: 21, y: 20 },
+            { t: 0.7, x: 32, y: 21 },
+            { t: 0.96, x: 55, y: 19 }
+          ],
+          passLines: [
+            { fromT: 0.05, toT: 0.35, x1: 7, y1: 33, x2: 21, y2: 20, type: 'pass' },
+            { fromT: 0.7, toT: 0.96, x1: 32, y1: 21, x2: 55, y2: 19, type: 'pass' }
+          ],
+          quiz: {
+            question: '你接门将传球后，发现前方有大片空当、对手前锋还没冲过来，你该怎么做？',
+            freezeT: 0.4,
+            options: [
+              { id: 'A', x: 32, y: 21, label: 'A. 自信带球向前推进，吸引对手后再传球', correct: true, feedback: '大将之风！中卫带球推进能吸引防守，帮前面的队友创造出超大空当！' },
+              { id: 'B', x: 7, y: 33, label: 'B. 害怕丢球立刻回传给门将', correct: false, feedback: '前面这么空，勇敢抬头往前带两步看看机会吧！' },
+              { id: 'C', x: 65, y: 33, label: 'C. 闭着眼睛大脚往前乱踢', correct: false, feedback: '盲目大脚等于把球权送给对手，从脚下慢慢组织球商更高！' }
+            ]
+          }
+        }
+      ],
+      defense: [
+        {
+          id: 'cb-def-cover',
+          title: '防身后保护·帮队友擦屁股',
+          badge: '后防定海神针',
+          difficulty: 2,
+          summary: '中卫是球门前最后的守护神！当边后卫或搭档中卫冲上去抢球时，你一定要立刻往球门方向斜退两步保护他们身后，绝不让对手打单刀！',
+          mantra: '「队友上抢我拖后，守住身后防单刀！」',
+          visionTips: [
+            '随时指挥防线：中卫视野最好，大声喊队友“左移！”、“顶上去！”、“注意身后！”',
+            '侧身准备回追：对方中场一抬头准备长传，立刻侧身准备往回跑，别正面傻站着！',
+            '先保中路门前：永远先把离球门最近的危险区域守住！'
+          ],
+          steps: [
+            { t: 0.0, title: '1. 发现边路被突破危机', desc: '对方边锋高速突破我方左后卫，斜向杀向禁区！', bubble: '左后卫被过了，我补位！' },
+            { t: 0.45, title: '2. 冷静后撤卡住射门角度', desc: '先不要盲目猛扑，边退边向斜侧方移动，卡住对手冲向球门的路线！', bubble: '卡住中路，延缓他！' },
+            { t: 0.82, title: '3. 看准时机精准断球', desc: '等到队友回防到位、对手趟球变大的一瞬间，果断上步把球断下！', bubble: '稳稳化解单刀！' }
+          ],
+          zones: [
+            { x: 18, y: 24, rx: 7, ry: 7, color: 'rgba(16, 185, 129, 0.3)', border: '#10b981', label: '中卫补位封堵区', fromT: 0.2, toT: 1.0 }
+          ],
+          actors: [
+            { id: 'hero', team: 'ally', role: 'CB', num: 4, isHero: true, kf: [{t:0,x:25,y:29},{t:0.45,x:20,y:24},{t:0.82,x:17,y:23},{t:1,x:20,y:22}] },
+            { id: 'lb', team: 'ally', role: 'LB', num: 3, kf: [{t:0,x:34,y:15},{t:0.5,x:28,y:16},{t:1,x:22,y:18}] },
+            { id: 'cb2', team: 'ally', role: 'CB2', num: 5, kf: [{t:0,x:25,y:41},{t:0.5,x:18,y:36},{t:1,x:17,y:34}] },
+            { id: 'orw', team: 'opp', role: 'RW', num: 7, kf: [{t:0,x:37,y:16},{t:0.5,x:24,y:20},{t:0.85,x:18,y:22},{t:1,x:16,y:24}] }
+          ],
+          ball: [
+            { t: 0, x: 36, y: 16 },
+            { t: 0.5, x: 23, y: 20 },
+            { t: 0.82, x: 17, y: 23 },
+            { t: 1.0, x: 28, y: 16 }
+          ],
+          passLines: [],
+          quiz: {
+            question: '对方快马边锋刚刚过掉了我方左后卫，正带球杀向禁区，作为中卫你该怎么做？',
+            freezeT: 0.3,
+            options: [
+              { id: 'A', x: 19, y: 24, label: 'A. 边退边斜向补位，卡住球门方向延缓对手', correct: true, feedback: '世界级中卫范迪克既视感！冷静边退边卡角度，等队友回防再找准时机断球！' },
+              { id: 'B', x: 34, y: 16, label: 'B. 猛冲出去飞铲', correct: false, feedback: '猛冲出去一旦被晃过，门将就要直接面对单刀球啦！' },
+              { id: 'C', x: 26, y: 42, label: 'C. 站在原地不动看左后卫自己追', correct: false, feedback: '中卫要主动补位保护队友身后，齐心协力才能守住球门！' }
+            ]
+          }
+        },
+        {
+          id: 'cb-def-line',
+          title: '保持防线平齐·防越位与长传',
+          badge: '防线指挥官',
+          difficulty: 2,
+          summary: '两名中卫要像双胞胎一样保持同一条水平线！对方前锋想偷跑打身后时，提前侧身看清队友位置，绝不一个人拖在最后面破坏越位线！',
+          mantra: '「防线平齐一条线，对手抬头我侧身！」',
+          visionTips: [
+            '随时瞄一眼搭档：我退一步、搭档退一步，大家齐步进退。',
+            '对方无压力抬头时：立刻提前后撤两步，防止被一脚长传打穿头顶！',
+            '对方低头回传时：大喊一声“压上！”，全队防线一起往前推！'
+          ],
+          steps: [
+            { t: 0.0, title: '1. 对手抬头准备长传', desc: '对方中场无人逼抢且抬头看向前锋，这是长传打身后的危险信号！', bubble: '对手抬头了，准备侧身！' },
+            { t: 0.45, title: '2. 提前侧身同步后撤', desc: '和中卫搭档保持平齐，提前侧身加速回撤抢占落点！', bubble: '抢先卡住长传落点！' },
+            { t: 0.82, title: '3. 轻松头球化解长传', desc: '抢在对方前锋启动前稳稳顶走长传球，化解高空威胁！', bubble: '长传根本过不去！' }
+          ],
+          zones: [
+            { x: 19, y: 31, rx: 6, ry: 9, color: 'rgba(56, 189, 248, 0.28)', border: '#38bdf8', label: '提前保护落点区', fromT: 0.25, toT: 1.0 }
+          ],
+          actors: [
+            { id: 'hero', team: 'ally', role: 'CB', num: 4, isHero: true, kf: [{t:0,x:32,y:27},{t:0.45,x:24,y:28},{t:0.82,x:19,y:30},{t:1,x:21,y:29}] },
+            { id: 'cb2', team: 'ally', role: 'CB2', num: 5, kf: [{t:0,x:32,y:40},{t:0.45,x:24,y:39},{t:0.82,x:20,y:39},{t:1,x:22,y:38}] },
+            { id: 'ost', team: 'opp', role: 'ST', num: 9, kf: [{t:0,x:34,y:32},{t:0.5,x:27,y:31},{t:1,x:22,y:31}] },
+            { id: 'ocm', team: 'opp', role: 'CM', num: 8, kf: [{t:0,x:58,y:34},{t:0.45,x:56,y:33},{t:1,x:55,y:33}] }
+          ],
+          ball: [
+            { t: 0, x: 57, y: 34 },
+            { t: 0.42, x: 55, y: 33 },
+            { t: 0.82, x: 19, y: 30, loft: true },
+            { t: 1.0, x: 35, y: 20, loft: true }
+          ],
+          passLines: [
+            { fromT: 0.42, toT: 0.82, x1: 55, y1: 33, x2: 19, y2: 30, type: 'pass' }
+          ],
+          quiz: {
+            question: '对方中场无人逼抢，已经抬头瞄向我们身后准备起高球长传，你该怎么办？',
+            freezeT: 0.3,
+            options: [
+              { id: 'A', x: 22, y: 29, label: 'A. 立刻侧身准备，提前后撤保护身后落点', correct: true, feedback: '极佳的预判能力！看到对手抬头就提前侧身启动，对方前锋永远跑不过你！' },
+              { id: 'B', x: 42, y: 28, label: 'B. 往前冲去抢中场的球', correct: false, feedback: '中场离你太远，往前冲只会把身后大片草地送给对方前锋！' },
+              { id: 'C', x: 32, y: 27, label: 'C. 站在原地等球飞过头顶再转身追', correct: false, feedback: '等球飞过头顶再转身就来不及啦，提前侧身是防守铁律！' }
+            ]
+          }
+        }
+      ]
+    }
+  };
+
+  // =========================================================
+  // 4. APPLICATION STATE & PERSISTENCE
+  // =========================================================
+  const state = {
+    format: 8,          // 5 | 8 | 11
+    phase: 'attack',    // 'attack' | 'defense'
+    position: 'ST',     // 'ST' | 'CAM' | ...
+    scenarioIdx: 0,
+    mode: 'learn',      // 'learn' | 'quiz' | 'draw'
+    playing: true,
+    speed: 1,
+    t: 0,               // 0..1 normalized animation progress
+    showZones: true,
+    showLines: true,
+    showBubbles: true,
+    quizSelected: null,
+    drawColor: '#facc15',
+    strokes: [],        // Array of { color, points: [{x,y}] } in normalized 0..100 x 0..66
+    drawingNow: false,
+    learnedIds: new Set(),
+    solvedQuizIds: new Set()
+  };
+
+  const STORAGE_KEY = 'little_tactician_progress_v1';
+
+  function loadProgress() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed.learned)) state.learnedIds = new Set(parsed.learned);
+      if (Array.isArray(parsed.quizzes)) state.solvedQuizIds = new Set(parsed.quizzes);
+    } catch (e) {}
+  }
+
+  function saveProgress() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        learned: Array.from(state.learnedIds),
+        quizzes: Array.from(state.solvedQuizIds)
+      }));
+    } catch (e) {}
+  }
+
+  function getTotalPossibleStars() {
+    let count = 0;
+    Object.values(SCENARIOS).forEach(posObj => {
+      count += (posObj.attack ? posObj.attack.length : 0);
+      count += (posObj.defense ? posObj.defense.length : 0);
+    });
+    return count * 2; // 1 for learning + 1 for quiz per scenario
+  }
+
+  function getScenariosList() {
+    const posObj = SCENARIOS[state.position] || SCENARIOS.ST;
+    return posObj[state.phase] || posObj.attack;
+  }
+
+  function getCurrentScenario() {
+    const list = getScenariosList();
+    if (state.scenarioIdx >= list.length) state.scenarioIdx = 0;
+    return list[state.scenarioIdx];
+  }
+
+  // =========================================================
+  // 5. INTERPOLATION & COHESIVE TEAM MOTION
+  // =========================================================
+  function lerp(a, b, t) { return a + (b - a) * t; }
+
+  function easeInOut(t) {
+    return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+  }
+
+  function sampleKeyframes(kf, t) {
+    if (!kf || kf.length === 0) return { x: 50, y: 33, loft: false };
+    if (t <= kf[0].t) return { x: kf[0].x, y: kf[0].y, loft: !!kf[0].loft, segT: 0 };
+    for (let i = 0; i < kf.length - 1; i++) {
+      const a = kf[i], b = kf[i + 1];
+      if (t >= a.t && t <= b.t) {
+        const span = Math.max(0.0001, b.t - a.t);
+        const rawSeg = (t - a.t) / span;
+        const s = easeInOut(rawSeg);
+        return {
+          x: lerp(a.x, b.x, s),
+          y: lerp(a.y, b.y, s),
+          loft: !!b.loft,
+          segT: rawSeg
+        };
+      }
+    }
+    const last = kf[kf.length - 1];
+    return { x: last.x, y: last.y, loft: !!last.loft, segT: 1 };
+  }
+
+  // Build full player roster for current format (5v5 / 8v8 / 11v11)
+  function getFrameEntities(scenario, t) {
+    const ballPos = sampleKeyframes(scenario.ball, t);
+    const entities = [];
+    const usedAllyRoles = new Set();
+    const usedOppRoles = new Set();
+
+    // 1. Add choreographed key actors
+    scenario.actors.forEach(actor => {
+      const pos = sampleKeyframes(actor.kf, t);
+      entities.push({
+        id: actor.id,
+        team: actor.team,
+        role: actor.role,
+        num: actor.num,
+        isHero: !!actor.isHero,
+        isGK: !!actor.isGK,
+        x: pos.x,
+        y: pos.y,
+        kf: actor.kf
+      });
+      if (actor.team === 'ally') usedAllyRoles.add(actor.role);
+      else usedOppRoles.add(actor.role);
+    });
+
+    // 2. Fill ambient squad players up to format count (5 / 8 / 11)
+    const targetCount = state.format;
+    const base = BASE_SQUADS[state.format];
+
+    const addAmbient = (team, baseList, usedSet) => {
+      let currentCount = entities.filter(e => e.team === team).length;
+      for (let i = 0; i < baseList.length && currentCount < targetCount; i++) {
+        const p = baseList[i];
+        if (usedSet.has(p.role)) continue;
+        // Shift subtly with ball position so whole team breathes realistically
+        const shiftX = p.isGK ? (ballPos.x - 50) * 0.04 : (ballPos.x - 50) * 0.14;
+        const shiftY = p.isGK ? (ballPos.y - 33) * 0.06 : (ballPos.y - 33) * 0.14;
+        let ax = Math.max(4, Math.min(96, p.x + shiftX));
+        let ay = Math.max(5, Math.min(61, p.y + shiftY));
+        // Avoid colliding with key actors
+        const tooClose = entities.some(e => Math.hypot(e.x - ax, e.y - ay) < 5.5);
+        if (tooClose) {
+          ax = Math.max(5, Math.min(95, ax + (team === 'ally' ? -5 : 5)));
+        }
+        entities.push({
+          id: 'amb_' + team + '_' + p.role + '_' + i,
+          team,
+          role: p.role,
+          num: p.num,
+          isHero: false,
+          isGK: !!p.isGK,
+          ambient: true,
+          x: ax,
+          y: ay
+        });
+        usedSet.add(p.role);
+        currentCount++;
+      }
+    };
+
+    addAmbient('ally', base.ally, usedAllyRoles);
+    addAmbient('opp', base.opp, usedOppRoles);
+
+    return { entities, ballPos };
+  }
+
+  // =========================================================
+  // 6. CANVAS RENDERING ENGINE (HiDPI, Crisp Stadium Visuals)
+  // =========================================================
+  const canvas = document.getElementById('pitch-canvas');
+  const ctx = canvas.getContext('2d');
+  let canvasW = 800;
+  let canvasH = 528;
+
+  function resizeCanvas() {
+    const rect = canvas.parentElement.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvasW = Math.max(300, rect.width);
+    canvasH = Math.max(200, rect.height);
+    canvas.width = Math.round(canvasW * dpr);
+    canvas.height = Math.round(canvasH * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    renderPitch();
+  }
+
+  function toPx(x, y) {
+    return { x: (x / 100) * canvasW, y: (y / 66) * canvasH };
+  }
+
+  function toNorm(px, py) {
+    return { x: (px / canvasW) * 100, y: (py / canvasH) * 66 };
+  }
+
+  function drawStadiumTurf() {
+    // Mowed grass stripes
+    const stripes = state.format === 5 ? 8 : (state.format === 8 ? 10 : 12);
+    const sw = canvasW / stripes;
+    for (let i = 0; i < stripes; i++) {
+      ctx.fillStyle = i % 2 === 0 ? '#2b9a56' : '#248c4d';
+      ctx.fillRect(i * sw, 0, sw + 1, canvasH);
+    }
+
+    // Subtle stadium vignette
+    const grad = ctx.createRadialGradient(canvasW * 0.5, canvasH * 0.5, canvasW * 0.25, canvasW * 0.5, canvasH * 0.5, canvasW * 0.72);
+    grad.addColorStop(0, 'rgba(255,255,255,0.04)');
+    grad.addColorStop(1, 'rgba(0,30,15,0.22)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, canvasW, canvasH);
+
+    // Pitch white lines
+    const padX = canvasW * 0.032;
+    const padY = canvasH * 0.045;
+    const fw = canvasW - padX * 2;
+    const fh = canvasH - padY * 2;
+
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.88)';
+    ctx.lineWidth = Math.max(1.5, canvasW * 0.0025);
+    ctx.lineJoin = 'round';
+
+    // Outer boundary
+    ctx.strokeRect(padX, padY, fw, fh);
+
+    // Halfway line
+    ctx.beginPath();
+    ctx.moveTo(canvasW / 2, padY);
+    ctx.lineTo(canvasW / 2, padY + fh);
+    ctx.stroke();
+
+    // Center circle & spot
+    const circleR = state.format === 5 ? fh * 0.16 : fh * 0.15;
+    ctx.beginPath();
+    ctx.arc(canvasW / 2, canvasH / 2, circleR, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(255,255,255,0.92)';
+    ctx.beginPath();
+    ctx.arc(canvasW / 2, canvasH / 2, Math.max(2.5, canvasW * 0.004), 0, Math.PI * 2);
+    ctx.fill();
+
+    // Penalty boxes (adapted slightly for 5v5 vs 8v8/11v11)
+    const boxW = state.format === 5 ? fw * 0.15 : fw * 0.165;
+    const boxH = state.format === 5 ? fh * 0.48 : fh * 0.56;
+    const smallW = fw * 0.055;
+    const smallH = fh * 0.26;
+    const goalW = padX * 0.72;
+    const goalH = fh * 0.16;
+
+    // Left penalty area & goal (Our Goal)
+    ctx.strokeRect(padX, (canvasH - boxH) / 2, boxW, boxH);
+    if (state.format !== 5) {
+      ctx.strokeRect(padX, (canvasH - smallH) / 2, smallW, smallH);
+      // Penalty arc left
+      ctx.beginPath();
+      ctx.arc(padX + boxW * 0.72, canvasH / 2, circleR * 0.85, -0.68, 0.68);
+      ctx.stroke();
+    }
+    // Left goal net
+    ctx.fillStyle = 'rgba(255,255,255,0.18)';
+    ctx.fillRect(padX - goalW, (canvasH - goalH) / 2, goalW, goalH);
+    ctx.strokeRect(padX - goalW, (canvasH - goalH) / 2, goalW, goalH);
+
+    // Right penalty area & goal (Opponent Goal)
+    ctx.strokeRect(padX + fw - boxW, (canvasH - boxH) / 2, boxW, boxH);
+    if (state.format !== 5) {
+      ctx.strokeRect(padX + fw - smallW, (canvasH - smallH) / 2, smallW, smallH);
+      // Penalty arc right
+      ctx.beginPath();
+      ctx.arc(padX + fw - boxW * 0.72, canvasH / 2, circleR * 0.85, Math.PI - 0.68, Math.PI + 0.68);
+      ctx.stroke();
+    }
+    // Right goal net
+    ctx.fillStyle = 'rgba(255,255,255,0.18)';
+    ctx.fillRect(padX + fw, (canvasH - goalH) / 2, goalW, goalH);
+    ctx.strokeRect(padX + fw, (canvasH - goalH) / 2, goalW, goalH);
+
+    // Corner arcs
+    const cr = Math.max(6, canvasW * 0.012);
+    ctx.beginPath(); ctx.arc(padX, padY, cr, 0, Math.PI / 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(padX + fw, padY, cr, Math.PI / 2, Math.PI); ctx.stroke();
+    ctx.beginPath(); ctx.arc(padX + fw, padY + fh, cr, Math.PI, Math.PI * 1.5); ctx.stroke();
+    ctx.beginPath(); ctx.arc(padX, padY + fh, cr, Math.PI * 1.5, Math.PI * 2); ctx.stroke();
+  }
+
+  function drawTacticalZones(scenario, t, now) {
+    if (!state.showZones || !scenario.zones) return;
+    const pulse = 1 + Math.sin(now * 0.005) * 0.05;
+    scenario.zones.forEach(z => {
+      if (t < (z.fromT || 0) || t > (z.toT || 1)) return;
+      const c = toPx(z.x, z.y);
+      const rx = (z.rx / 100) * canvasW * pulse;
+      const ry = (z.ry / 66) * canvasH * pulse;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.ellipse(c.x, c.y, rx, ry, 0, 0, Math.PI * 2);
+      ctx.fillStyle = z.color;
+      ctx.fill();
+      ctx.setLineDash([6, 4]);
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = z.border || '#facc15';
+      ctx.stroke();
+
+      // Zone label pill
+      if (z.label) {
+        ctx.setLineDash([]);
+        const fs = Math.max(10, Math.round(canvasW * 0.0145));
+        ctx.font = `700 ${fs}px "PingFang SC", sans-serif`;
+        const tw = ctx.measureText(z.label).width;
+        const px = c.x - tw / 2 - 7;
+        const py = c.y + ry - fs * 0.35;
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.78)';
+        roundRect(ctx, px, py, tw + 14, fs + 8, 999);
+        ctx.fill();
+        ctx.fillStyle = '#fef08a';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(z.label, c.x, py + (fs + 8) / 2);
+      }
+      ctx.restore();
+    });
+  }
+
+  function drawArrowHead(x, y, angle, size, color) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(-size, -size * 0.55);
+    ctx.lineTo(-size * 0.75, 0);
+    ctx.lineTo(-size, size * 0.55);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawHeroRunTrail(scenario, t) {
+    if (!state.showLines) return;
+    const hero = scenario.actors.find(a => a.isHero);
+    if (!hero || !hero.kf || hero.kf.length < 2) return;
+
+    // Draw full dashed intended path (subtle)
+    ctx.save();
+    ctx.beginPath();
+    const steps = 40;
+    for (let i = 0; i <= steps; i++) {
+      const p = sampleKeyframes(hero.kf, i / steps);
+      const pt = toPx(p.x, p.y);
+      if (i === 0) ctx.moveTo(pt.x, pt.y);
+      else ctx.lineTo(pt.x, pt.y);
+    }
+    ctx.strokeStyle = 'rgba(253, 224, 71, 0.45)';
+    ctx.lineWidth = Math.max(2.5, canvasW * 0.004);
+    ctx.setLineDash([8, 6]);
+    ctx.stroke();
+
+    // Draw completed bright path up to t
+    if (t > 0.02) {
+      ctx.beginPath();
+      const curSteps = Math.max(2, Math.floor(steps * t));
+      let prevPt = null, lastPt = null;
+      for (let i = 0; i <= curSteps; i++) {
+        const p = sampleKeyframes(hero.kf, (i / curSteps) * t);
+        const pt = toPx(p.x, p.y);
+        if (i === 0) ctx.moveTo(pt.x, pt.y);
+        else ctx.lineTo(pt.x, pt.y);
+        prevPt = lastPt;
+        lastPt = pt;
+      }
+      ctx.strokeStyle = '#fde047';
+      ctx.lineWidth = Math.max(3.5, canvasW * 0.0055);
+      ctx.setLineDash([]);
+      ctx.shadowColor = 'rgba(250, 204, 21, 0.65)';
+      ctx.shadowBlur = 8;
+      ctx.stroke();
+    }
+
+    // End target arrow
+    const endP = sampleKeyframes(hero.kf, 1);
+    const preEndP = sampleKeyframes(hero.kf, 0.94);
+    const p1 = toPx(preEndP.x, preEndP.y);
+    const p2 = toPx(endP.x, endP.y);
+    if (Math.hypot(p2.x - p1.x, p2.y - p1.y) > 2) {
+      drawArrowHead(p2.x, p2.y, Math.atan2(p2.y - p1.y, p2.x - p1.x), Math.max(10, canvasW * 0.016), '#fde047');
+    }
+    ctx.restore();
+  }
+
+  function drawPassLines(scenario, t) {
+    if (!state.showLines || !scenario.passLines) return;
+    scenario.passLines.forEach(line => {
+      if (t < line.fromT - 0.05) return;
+      const p1 = toPx(line.x1, line.y1);
+      const p2 = toPx(line.x2, line.y2);
+      const prog = Math.min(1, Math.max(0, (t - line.fromT) / Math.max(0.05, line.toT - line.fromT)));
+      const curX = lerp(p1.x, p2.x, prog);
+      const curY = lerp(p1.y, p2.y, prog);
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(curX, curY);
+      ctx.strokeStyle = 'rgba(125, 211, 252, 0.85)';
+      ctx.lineWidth = Math.max(2.2, canvasW * 0.0035);
+      ctx.setLineDash([5, 5]);
+      ctx.stroke();
+      if (prog > 0.15) {
+        drawArrowHead(curX, curY, Math.atan2(p2.y - p1.y, p2.x - p1.x), Math.max(8, canvasW * 0.013), '#7dd3fc');
+      }
+      ctx.restore();
+    });
+  }
+
+  function drawPlayers(entities, now) {
+    const baseR = Math.max(12, Math.min(20, canvasW * 0.022));
+
+    // Draw ambient players first, then key players, then Hero on top
+    const sorted = [...entities].sort((a, b) => {
+      const score = p => p.isHero ? 3 : (p.ambient ? 1 : 2);
+      return score(a) - score(b);
+    });
+
+    sorted.forEach(p => {
+      const pos = toPx(p.x, p.y);
+      const r = p.isHero ? baseR * 1.18 : (p.ambient ? baseR * 0.86 : baseR);
+
+      ctx.save();
+      if (p.ambient) ctx.globalAlpha = 0.72;
+
+      // Ground shadow
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
+      ctx.beginPath();
+      ctx.ellipse(pos.x, pos.y + r * 0.78, r * 0.85, r * 0.35, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Hero animated golden halo
+      if (p.isHero) {
+        const haloR = r + 5 + Math.sin(now * 0.007) * 3;
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, haloR, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(250, 204, 21, 0.28)';
+        ctx.fill();
+        ctx.lineWidth = 2.2;
+        ctx.strokeStyle = '#fde047';
+        ctx.stroke();
+      }
+
+      // Jersey circle
+      ctx.beginPath();
+      ctx.arc(pos.x, pos.y, r, 0, Math.PI * 2);
+      if (p.isHero) {
+        const g = ctx.createRadialGradient(pos.x - r * 0.3, pos.y - r * 0.3, 2, pos.x, pos.y, r);
+        g.addColorStop(0, '#fcd34d');
+        g.addColorStop(1, '#d97706');
+        ctx.fillStyle = g;
+      } else if (p.isGK) {
+        ctx.fillStyle = p.team === 'ally' ? '#14b8a6' : '#a855f7';
+      } else if (p.team === 'ally') {
+        ctx.fillStyle = '#0ea5e9';
+      } else {
+        ctx.fillStyle = '#ef4444';
+      }
+      ctx.fill();
+
+      ctx.lineWidth = p.isHero ? 3 : 2;
+      ctx.strokeStyle = '#ffffff';
+      ctx.stroke();
+
+      // Number inside jersey
+      ctx.fillStyle = '#ffffff';
+      ctx.font = `800 ${Math.round(r * 0.92)}px "Inter", sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(String(p.num), pos.x, pos.y + 0.5);
+
+      // Hero label badge below
+      if (p.isHero) {
+        const posMeta = POSITIONS[state.position];
+        const tag = '我 · ' + (posMeta ? posMeta.short : p.role);
+        const fs = Math.max(10, Math.round(canvasW * 0.014));
+        ctx.font = `800 ${fs}px "PingFang SC", sans-serif`;
+        const tw = ctx.measureText(tag).width;
+        const bx = pos.x - tw / 2 - 7;
+        const by = pos.y + r + 5;
+        ctx.fillStyle = '#f59e0b';
+        roundRect(ctx, bx, by, tw + 14, fs + 7, 999);
+        ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(tag, pos.x, by + (fs + 7) / 2);
+      } else if (!p.ambient && !p.isGK) {
+        // Subtle role code below key actors
+        const fs = Math.max(9, Math.round(canvasW * 0.0115));
+        ctx.font = `700 ${fs}px "Inter", sans-serif`;
+        ctx.fillStyle = 'rgba(255,255,255,0.92)';
+        ctx.fillText(p.role.replace('2', ''), pos.x, pos.y + r + fs * 0.75);
+      }
+
+      ctx.restore();
+    });
+  }
+
+  function drawBall(ballPos) {
+    const pos = toPx(ballPos.x, ballPos.y);
+    const loftHeight = ballPos.loft ? Math.sin(ballPos.segT * Math.PI) * (canvasH * 0.09) : 0;
+    const scale = 1 + (loftHeight / (canvasH * 0.22));
+    const r = Math.max(6.5, canvasW * 0.011) * scale;
+
+    ctx.save();
+    // Shadow on grass
+    ctx.fillStyle = 'rgba(0,0,0,0.32)';
+    ctx.beginPath();
+    ctx.ellipse(pos.x, pos.y + 3, r * 0.85, r * 0.42, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Soccer ball body
+    const by = pos.y - loftHeight;
+    ctx.beginPath();
+    ctx.arc(pos.x, by, r, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+    ctx.lineWidth = 1.6;
+    ctx.strokeStyle = '#0f172a';
+    ctx.stroke();
+
+    // Classic pentagon center patch
+    ctx.fillStyle = '#1e293b';
+    ctx.beginPath();
+    ctx.arc(pos.x, by, r * 0.36, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawHeroBubble(scenario, entities, t) {
+    if (!state.showBubbles || state.mode === 'quiz') return;
+    const hero = entities.find(e => e.isHero);
+    if (!hero) return;
+
+    let activeStep = scenario.steps[0];
+    for (let i = 0; i < scenario.steps.length; i++) {
+      if (t >= scenario.steps[i].t) activeStep = scenario.steps[i];
+    }
+    if (!activeStep || !activeStep.bubble) return;
+
+    const text = activeStep.bubble;
+    const pos = toPx(hero.x, hero.y);
+    const fs = Math.max(11, Math.round(canvasW * 0.0155));
+
+    ctx.save();
+    ctx.font = `800 ${fs}px "PingFang SC", sans-serif`;
+    const tw = ctx.measureText(text).width;
+    const bw = tw + 22;
+    const bh = fs + 14;
+    let bx = pos.x - bw / 2;
+    let by = pos.y - bh - Math.max(24, canvasW * 0.036);
+
+    // Keep inside canvas bounds
+    bx = Math.max(10, Math.min(canvasW - bw - 10, bx));
+    if (by < 38) by = pos.y + Math.max(34, canvasW * 0.048);
+
+    ctx.shadowColor = 'rgba(15, 23, 42, 0.25)';
+    ctx.shadowBlur = 10;
+    ctx.fillStyle = '#ffffff';
+    roundRect(ctx, bx, by, bw, bh, 12);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillStyle = '#0f172a';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, bx + bw / 2, by + bh / 2 + 0.5);
+    ctx.restore();
+  }
+
+  function drawQuizTargets(scenario, now) {
+    if (state.mode !== 'quiz' || !scenario.quiz) return;
+    const pulse = 1 + Math.sin(now * 0.007) * 0.1;
+
+    scenario.quiz.options.forEach(opt => {
+      const pos = toPx(opt.x, opt.y);
+      const r = Math.max(18, canvasW * 0.028) * pulse;
+      const isSelected = state.quizSelected === opt.id;
+
+      ctx.save();
+      let fill = 'rgba(99, 102, 241, 0.35)';
+      let stroke = '#818cf8';
+      let badgeBg = '#4f46e5';
+
+      if (state.quizSelected) {
+        if (opt.correct) {
+          fill = 'rgba(16, 185, 129, 0.42)';
+          stroke = '#34d399';
+          badgeBg = '#059669';
+        } else if (isSelected) {
+          fill = 'rgba(244, 63, 94, 0.42)';
+          stroke = '#fb7185';
+          badgeBg = '#e11d48';
+        }
+      }
+
+      ctx.beginPath();
+      ctx.arc(pos.x, pos.y, r, 0, Math.PI * 2);
+      ctx.fillStyle = fill;
+      ctx.fill();
+      ctx.lineWidth = 3;
+      ctx.setLineDash([5, 4]);
+      ctx.strokeStyle = stroke;
+      ctx.stroke();
+
+      // Letter circle in center
+      ctx.setLineDash([]);
+      const cr = Math.max(12, canvasW * 0.017);
+      ctx.beginPath();
+      ctx.arc(pos.x, pos.y, cr, 0, Math.PI * 2);
+      ctx.fillStyle = badgeBg;
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#ffffff';
+      ctx.stroke();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = `900 ${Math.round(cr * 1.1)}px "Inter", sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(opt.id, pos.x, pos.y + 0.5);
+      ctx.restore();
+    });
+  }
+
+  function drawCoachStrokes() {
+    if (state.strokes.length === 0) return;
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    state.strokes.forEach(s => {
+      if (s.points.length < 2) return;
+      ctx.beginPath();
+      s.points.forEach((pt, idx) => {
+        const p = toPx(pt.x, pt.y);
+        if (idx === 0) ctx.moveTo(p.x, p.y);
+        else ctx.lineTo(p.x, p.y);
+      });
+      ctx.strokeStyle = s.color;
+      ctx.lineWidth = Math.max(3.5, canvasW * 0.006);
+      ctx.shadowColor = 'rgba(0,0,0,0.35)';
+      ctx.shadowBlur = 4;
+      ctx.stroke();
+    });
+    ctx.restore();
+  }
+
+  function roundRect(c, x, y, w, h, r) {
+    const radius = Math.min(r, w / 2, h / 2);
+    c.beginPath();
+    c.moveTo(x + radius, y);
+    c.arcTo(x + w, y, x + w, y + h, radius);
+    c.arcTo(x + w, y + h, x, y + h, radius);
+    c.arcTo(x, y + h, x, y, radius);
+    c.arcTo(x, y, x + w, y, radius);
+    c.closePath();
+  }
+
+  function renderPitch(now) {
+    const ts = now || performance.now();
+    const scenario = getCurrentScenario();
+    const t = state.mode === 'quiz' ? scenario.quiz.freezeT : state.t;
+
+    drawStadiumTurf();
+    drawTacticalZones(scenario, t, ts);
+    if (state.mode !== 'quiz') {
+      drawHeroRunTrail(scenario, t);
+      drawPassLines(scenario, t);
+    }
+
+    const { entities, ballPos } = getFrameEntities(scenario, t);
+    drawPlayers(entities, ts);
+    drawBall(ballPos);
+    drawHeroBubble(scenario, entities, t);
+    drawQuizTargets(scenario, ts);
+    drawCoachStrokes();
+  }
+
+  // =========================================================
+  // 7. ANIMATION LOOP
+  // =========================================================
+  let lastFrameTs = null;
+  let rafId = null;
+  const LOOP_DURATION_SEC = 5.4;
+
+  function tick(ts) {
+    if (lastFrameTs !== null && state.playing && state.mode === 'learn') {
+      const dt = Math.min(0.1, (ts - lastFrameTs) / 1000);
+      state.t += (dt * state.speed) / LOOP_DURATION_SEC;
+      if (state.t >= 1) {
+        state.t = 0;
+      }
+      syncPlaybackUI();
+    }
+    lastFrameTs = ts;
+    renderPitch(ts);
+    rafId = requestAnimationFrame(tick);
+  }
+
+  // =========================================================
+  // 8. UI RENDERING & STATE SYNCHRONIZATION
+  // =========================================================
+  function showToast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.remove('opacity-0', 'translate-y-2');
+    el.classList.add('opacity-100', 'translate-y-0');
+    clearTimeout(el._timer);
+    el._timer = setTimeout(() => {
+      el.classList.add('opacity-0', 'translate-y-2');
+      el.classList.remove('opacity-100', 'translate-y-0');
+    }, 2200);
+  }
+
+  function syncPlaybackUI() {
+    const scenario = getCurrentScenario();
+    const slider = document.getElementById('time-slider');
+    const pct = document.getElementById('time-percent');
+    const stepInd = document.getElementById('step-indicator');
+    const playBtn = document.getElementById('btn-play');
+
+    slider.value = Math.round(state.t * 1000);
+    pct.textContent = Math.round(state.t * 100) + '%';
+    playBtn.textContent = state.playing ? '⏸' : '▶';
+
+    let activeIdx = 0;
+    scenario.steps.forEach((st, idx) => {
+      if (state.t >= st.t) activeIdx = idx;
+    });
+    stepInd.textContent = scenario.steps[activeIdx].title;
+
+    // Highlight active step card
+    document.querySelectorAll('.step-card').forEach((card, idx) => {
+      if (idx === activeIdx) {
+        card.classList.add('bg-emerald-50', 'border-emerald-400', 'ring-2', 'ring-emerald-200');
+        card.classList.remove('bg-slate-50/70', 'border-slate-200');
+      } else {
+        card.classList.remove('bg-emerald-50', 'border-emerald-400', 'ring-2', 'ring-emerald-200');
+        card.classList.add('bg-slate-50/70', 'border-slate-200');
+      }
+    });
+  }
+
+  function renderHeaderControls() {
+    // Formats
+    document.querySelectorAll('.fmt-btn').forEach(btn => {
+      const active = Number(btn.dataset.format) === state.format;
+      btn.className = active
+        ? 'fmt-btn btn-tap px-3 sm:px-4 py-1.5 rounded-xl text-xs sm:text-sm font-extrabold bg-emerald-500 text-white shadow-sm'
+        : 'fmt-btn btn-tap px-3 sm:px-4 py-1.5 rounded-xl text-xs sm:text-sm font-bold text-slate-600 hover:text-slate-900';
+    });
+
+    // Phase
+    document.querySelectorAll('.phase-btn').forEach(btn => {
+      const active = btn.dataset.phase === state.phase;
+      if (active) {
+        btn.className = state.phase === 'attack'
+          ? 'phase-btn btn-tap px-3 py-1.5 rounded-xl text-xs sm:text-sm font-extrabold flex items-center gap-1 bg-amber-500 text-white shadow-sm'
+          : 'phase-btn btn-tap px-3 py-1.5 rounded-xl text-xs sm:text-sm font-extrabold flex items-center gap-1 bg-indigo-600 text-white shadow-sm';
+      } else {
+        btn.className = 'phase-btn btn-tap px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1 text-slate-600 hover:text-slate-900';
+      }
+    });
+
+    // Mode
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+      const active = btn.dataset.mode === state.mode;
+      btn.className = active
+        ? 'mode-btn btn-tap px-3 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1 bg-slate-900 text-white shadow-sm'
+        : 'mode-btn btn-tap px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 text-slate-600 hover:bg-slate-100';
+    });
+
+    // Draw toolbar & playback visibility
+    document.getElementById('draw-toolbar').classList.toggle('hidden', state.mode !== 'draw');
+    document.getElementById('playback-bar').classList.toggle('hidden', state.mode === 'quiz');
+    document.getElementById('panel-learn').classList.toggle('hidden', state.mode === 'quiz');
+    document.getElementById('panel-quiz').classList.toggle('hidden', state.mode !== 'quiz');
+
+    // Pitch badges
+    const fmt = FORMATS[state.format];
+    document.getElementById('pitch-badge-format').textContent = `${fmt.name} · ${fmt.formationLabel}`;
+    const dirBadge = document.getElementById('pitch-badge-dir');
+    if (state.phase === 'attack') {
+      dirBadge.textContent = '我方进攻方向 →';
+      dirBadge.className = 'px-2.5 py-1 rounded-full bg-amber-500/90 backdrop-blur text-white text-[11px] font-bold';
+    } else {
+      dirBadge.textContent = '← 守护我方球门';
+      dirBadge.className = 'px-2.5 py-1 rounded-full bg-indigo-600/90 backdrop-blur text-white text-[11px] font-bold';
+    }
+
+    // Stars count
+    const totalStars = state.learnedIds.size + state.solvedQuizIds.size;
+    document.getElementById('star-count').textContent = String(totalStars);
+  }
+
+  function renderPositionBar() {
+    const bar = document.getElementById('position-bar');
+    const allowed = FORMATS[state.format].positions;
+    if (!allowed.includes(state.position)) {
+      state.position = allowed[0];
+      state.scenarioIdx = 0;
+    }
+
+    bar.innerHTML = allowed.map(code => {
+      const p = POSITIONS[code];
+      const active = code === state.position;
+      return `
+        <button data-pos="${code}" class="pos-btn btn-tap shrink-0 px-3.5 py-1.5 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-1.5 border transition-all ${
+          active
+            ? 'bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-600/20'
+            : 'bg-white text-slate-700 border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/50'
+        }">
+          <span>${p.icon}</span>
+          <span>${p.name}</span>
+          <span class="text-[10px] opacity-80 font-mono">${p.code}</span>
+        </button>
+      `;
+    }).join('');
+
+    bar.querySelectorAll('.pos-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        sfxTap();
+        state.position = btn.dataset.pos;
+        state.scenarioIdx = 0;
+        state.t = 0;
+        state.quizSelected = null;
+        state.strokes = [];
+        renderAll();
+      });
+    });
+  }
+
+  function renderScenarioTabs() {
+    const tabs = document.getElementById('scenario-tabs');
+    const list = getScenariosList();
+    tabs.innerHTML = list.map((sc, idx) => {
+      const active = idx === state.scenarioIdx;
+      const done = state.learnedIds.has(sc.id);
+      return `
+        <button data-sc="${idx}" class="sc-btn btn-tap shrink-0 px-3.5 py-1.5 rounded-2xl text-xs sm:text-sm font-bold border transition-all flex items-center gap-1.5 ${
+          active
+            ? 'bg-amber-500 text-white border-amber-500 shadow-sm'
+            : 'bg-white text-slate-700 border-slate-200 hover:border-amber-300'
+        }">
+          <span>情形 ${idx + 1}：${sc.title}</span>
+          ${done ? '<span class="text-[11px]">✓</span>' : ''}
+        </button>
+      `;
+    }).join('');
+
+    tabs.querySelectorAll('.sc-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        sfxTap();
+        state.scenarioIdx = Number(btn.dataset.sc);
+        state.t = 0;
+        state.quizSelected = null;
+        state.strokes = [];
+        renderAll();
+      });
+    });
+  }
+
+  function renderRightPanel() {
+    const sc = getCurrentScenario();
+    const posMeta = POSITIONS[state.position];
+    const fmt = FORMATS[state.format];
+
+    document.getElementById('card-pos-tag').textContent = `${posMeta.name} ${posMeta.code}`;
+    document.getElementById('card-badge-tag').textContent = sc.badge;
+    document.getElementById('card-title').textContent = sc.title;
+    document.getElementById('card-summary').textContent = sc.summary;
+    document.getElementById('card-stars').textContent = '★'.repeat(sc.difficulty) + '☆'.repeat(3 - sc.difficulty);
+    document.getElementById('card-mantra').textContent = sc.mantra;
+
+    // Format tip
+    document.getElementById('format-tip-title').textContent = `${fmt.name}${state.phase === 'attack' ? '进攻' : '防守'}贴士：`;
+    document.getElementById('format-tip-body').textContent = state.phase === 'attack' ? fmt.tipAttack : fmt.tipDefense;
+
+    // Learned button
+    const learnedBtn = document.getElementById('btn-mark-learned');
+    const isLearned = state.learnedIds.has(sc.id);
+    learnedBtn.textContent = isLearned ? '⭐ 已掌握' : '✓ 我学会了';
+    learnedBtn.className = isLearned
+      ? 'btn-tap px-2.5 py-1 rounded-xl text-xs font-extrabold bg-amber-100 text-amber-800 border border-amber-300'
+      : 'btn-tap px-2.5 py-1 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100';
+
+    // Steps list
+    const stepsList = document.getElementById('steps-list');
+    stepsList.innerHTML = sc.steps.map((st, idx) => `
+      <button data-step-t="${st.t}" class="step-card btn-tap w-full text-left p-3 rounded-2xl border transition-all bg-slate-50/70 border-slate-200">
+        <div class="text-xs font-extrabold text-slate-900 mb-0.5">${st.title}</div>
+        <div class="text-xs text-slate-600 leading-relaxed">${st.desc}</div>
+      </button>
+    `).join('');
+
+    stepsList.querySelectorAll('.step-card').forEach(card => {
+      card.addEventListener('click', () => {
+        sfxTap();
+        state.t = Number(card.dataset.stepT) + 0.02;
+        state.playing = false;
+        syncPlaybackUI();
+      });
+    });
+
+    // Vision list
+    document.getElementById('vision-list').innerHTML = sc.visionTips.map((tip, i) => `
+      <li class="flex items-start gap-2">
+        <span class="w-5 h-5 rounded-full bg-sky-100 text-sky-700 text-[11px] font-extrabold flex items-center justify-center shrink-0 mt-0.5">${i + 1}</span>
+        <span class="leading-relaxed">${tip}</span>
+      </li>
+    `).join('');
+
+    // Quiz panel
+    renderQuizPanel(sc);
+  }
+
+  function renderQuizPanel(sc) {
+    const q = sc.quiz;
+    document.getElementById('quiz-question').textContent = q.question;
+    const optsEl = document.getElementById('quiz-options');
+    const fbEl = document.getElementById('quiz-feedback');
+
+    optsEl.innerHTML = q.options.map(opt => {
+      const selected = state.quizSelected === opt.id;
+      let cls = 'bg-white border-slate-200 hover:border-indigo-400 text-slate-800';
+      if (state.quizSelected) {
+        if (opt.correct) cls = 'bg-emerald-50 border-emerald-500 text-emerald-900 ring-2 ring-emerald-200';
+        else if (selected) cls = 'bg-rose-50 border-rose-400 text-rose-900';
+        else cls = 'bg-slate-50 border-slate-200 text-slate-400';
+      }
+      return `
+        <button data-opt="${opt.id}" class="quiz-opt-btn btn-tap w-full text-left px-3.5 py-2.5 rounded-2xl border-2 text-xs sm:text-sm font-bold transition-all ${cls}">
+          ${opt.label}
+        </button>
+      `;
+    }).join('');
+
+    optsEl.querySelectorAll('.quiz-opt-btn').forEach(btn => {
+      btn.addEventListener('click', () => handleQuizAnswer(btn.dataset.opt));
+    });
+
+    if (state.quizSelected) {
+      const chosen = q.options.find(o => o.id === state.quizSelected);
+      fbEl.classList.remove('hidden');
+      if (chosen && chosen.correct) {
+        fbEl.className = 'mt-3 p-3.5 rounded-2xl text-sm font-bold leading-relaxed bg-emerald-100 text-emerald-900 border border-emerald-300';
+        fbEl.textContent = '🎉 ' + chosen.feedback;
+      } else if (chosen) {
+        fbEl.className = 'mt-3 p-3.5 rounded-2xl text-sm font-bold leading-relaxed bg-rose-100 text-rose-900 border border-rose-300';
+        fbEl.textContent = '💡 再想想：' + chosen.feedback;
+      }
+    } else {
+      fbEl.classList.add('hidden');
+    }
+  }
+
+  function handleQuizAnswer(optId) {
+    const sc = getCurrentScenario();
+    const chosen = sc.quiz.options.find(o => o.id === optId);
+    if (!chosen) return;
+    state.quizSelected = optId;
+
+    if (chosen.correct) {
+      sfxSuccess();
+      if (!state.solvedQuizIds.has(sc.id)) {
+        state.solvedQuizIds.add(sc.id);
+        saveProgress();
+        showToast('⭐ 球商 +1！你找到了最佳跑位！');
+      }
+      if (typeof confetti === 'function') {
+        try {
+          confetti({ particleCount: 55, spread: 60, origin: { y: 0.65 } });
+        } catch (e) {}
+      }
+    } else {
+      sfxWrong();
+    }
+    renderHeaderControls();
+    renderQuizPanel(sc);
+  }
+
+  function renderAll() {
+    renderPositionBar();
+    renderHeaderControls();
+    renderScenarioTabs();
+    renderRightPanel();
+    syncPlaybackUI();
+    renderPitch();
+  }
+
+  // =========================================================
+  // 9. EVENT LISTENERS (Touch + Mouse + Controls)
+  // =========================================================
+  // Format buttons
+  document.querySelectorAll('.fmt-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      sfxTap();
+      state.format = Number(btn.dataset.format);
+      state.t = 0;
+      state.quizSelected = null;
+      state.strokes = [];
+      renderAll();
+    });
+  });
+
+  // Phase buttons
+  document.querySelectorAll('.phase-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      sfxTap();
+      state.phase = btn.dataset.phase;
+      state.scenarioIdx = 0;
+      state.t = 0;
+      state.quizSelected = null;
+      state.strokes = [];
+      renderAll();
+    });
+  });
+
+  // Mode buttons
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      sfxTap();
+      state.mode = btn.dataset.mode;
+      if (state.mode === 'quiz') {
+        state.playing = false;
+        state.quizSelected = null;
+      } else if (state.mode === 'learn') {
+        state.playing = true;
+      }
+      renderHeaderControls();
+      renderQuizPanel(getCurrentScenario());
+      syncPlaybackUI();
+    });
+  });
+
+  // Playback buttons
+  document.getElementById('btn-play').addEventListener('click', () => {
+    sfxTap();
+    state.playing = !state.playing;
+    syncPlaybackUI();
+  });
+
+  document.getElementById('btn-replay').addEventListener('click', () => {
+    sfxKick();
+    state.t = 0;
+    state.playing = true;
+    syncPlaybackUI();
+  });
+
+  document.getElementById('btn-prev-step').addEventListener('click', () => {
+    sfxTap();
+    const steps = getCurrentScenario().steps;
+    let cur = 0;
+    steps.forEach((s, i) => { if (state.t >= s.t + 0.03) cur = i; });
+    const prev = Math.max(0, cur - 1);
+    state.t = steps[prev].t + 0.01;
+    state.playing = false;
+    syncPlaybackUI();
+  });
+
+  document.getElementById('btn-next-step').addEventListener('click', () => {
+    sfxTap();
+    const steps = getCurrentScenario().steps;
+    let next = steps.length - 1;
+    for (let i = 0; i < steps.length; i++) {
+      if (steps[i].t > state.t + 0.02) { next = i; break; }
+    }
+    state.t = steps[next].t + 0.01;
+    state.playing = false;
+    syncPlaybackUI();
+  });
+
+  document.getElementById('time-slider').addEventListener('input', e => {
+    state.t = Number(e.target.value) / 1000;
+    state.playing = false;
+    syncPlaybackUI();
+  });
+
+  // Speed buttons
+  document.querySelectorAll('.speed-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      sfxTap();
+      state.speed = Number(btn.dataset.speed);
+      document.querySelectorAll('.speed-btn').forEach(b => {
+        const active = Number(b.dataset.speed) === state.speed;
+        b.className = active
+          ? 'speed-btn btn-tap px-2.5 py-1 rounded-lg text-xs font-bold bg-white text-emerald-700 shadow-sm'
+          : 'speed-btn btn-tap px-2.5 py-1 rounded-lg text-xs font-bold text-slate-600';
+      });
+    });
+  });
+
+  // Layer toggles
+  function bindLayerToggle(id, prop) {
+    const el = document.getElementById(id);
+    el.addEventListener('click', () => {
+      sfxTap();
+      state[prop] = !state[prop];
+      el.className = state[prop]
+        ? 'layer-toggle px-2 py-0.5 rounded-lg bg-emerald-500/30 border border-emerald-400/50 text-emerald-100 font-medium'
+        : 'layer-toggle px-2 py-0.5 rounded-lg bg-white/10 border border-white/15 text-slate-400 font-medium';
+    });
+  }
+  bindLayerToggle('toggle-zones', 'showZones');
+  bindLayerToggle('toggle-lines', 'showLines');
+  bindLayerToggle('toggle-bubbles', 'showBubbles');
+
+  // Mark Learned
+  document.getElementById('btn-mark-learned').addEventListener('click', () => {
+    const sc = getCurrentScenario();
+    if (state.learnedIds.has(sc.id)) {
+      state.learnedIds.delete(sc.id);
+      sfxTap();
+    } else {
+      state.learnedIds.add(sc.id);
+      sfxSuccess();
+      showToast('⭐ 太棒了！你又掌握了一个新跑位！');
+    }
+    saveProgress();
+    renderAll();
+  });
+
+  // Quiz retry & watch animation
+  document.getElementById('btn-quiz-retry').addEventListener('click', () => {
+    sfxTap();
+    state.quizSelected = null;
+    renderQuizPanel(getCurrentScenario());
+  });
+
+  document.getElementById('btn-quiz-watch').addEventListener('click', () => {
+    sfxKick();
+    state.mode = 'learn';
+    state.t = 0;
+    state.playing = true;
+    renderHeaderControls();
+    syncPlaybackUI();
+  });
+
+  // Sound toggle
+  document.getElementById('btn-sound').addEventListener('click', () => {
+    soundEnabled = !soundEnabled;
+    document.getElementById('sound-icon').textContent = soundEnabled ? '🔊' : '🔇';
+    if (soundEnabled) sfxTap();
+  });
+
+  // Draw toolbar colors & clear
+  document.querySelectorAll('.draw-color').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.drawColor = btn.dataset.color;
+      document.querySelectorAll('.draw-color').forEach(b => {
+        b.classList.toggle('border-white', b === btn);
+        b.classList.toggle('border-transparent', b !== btn);
+      });
+    });
+  });
+
+  document.getElementById('btn-clear-draw').addEventListener('click', () => {
+    sfxTap();
+    state.strokes = [];
+  });
+
+  // Canvas pointer interaction (Quiz tap on grass OR Coach pencil drawing)
+  function getCanvasCoords(evt) {
+    const rect = canvas.getBoundingClientRect();
+    const clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
+    const clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
+    return { x: clientX - rect.left, y: clientY - rect.top };
+  }
+
+  canvas.addEventListener('pointerdown', evt => {
+    const pt = getCanvasCoords(evt);
+    if (state.mode === 'quiz') {
+      const sc = getCurrentScenario();
+      const hitR = Math.max(26, canvasW * 0.042);
+      for (const opt of sc.quiz.options) {
+        const op = toPx(opt.x, opt.y);
+        if (Math.hypot(pt.x - op.x, pt.y - op.y) <= hitR) {
+          handleQuizAnswer(opt.id);
+          return;
+        }
+      }
+      return;
+    }
+
+    if (state.mode === 'draw') {
+      state.drawingNow = true;
+      state.strokes.push({ color: state.drawColor, points: [toNorm(pt.x, pt.y)] });
+      return;
+    }
+
+    // In learn mode, tapping canvas toggles play/pause for quick iPad control
+    state.playing = !state.playing;
+    sfxTap();
+    syncPlaybackUI();
+  });
+
+  canvas.addEventListener('pointermove', evt => {
+    if (!state.drawingNow || state.mode !== 'draw') return;
+    const pt = getCanvasCoords(evt);
+    const cur = state.strokes[state.strokes.length - 1];
+    if (cur) cur.points.push(toNorm(pt.x, pt.y));
+  });
+
+  window.addEventListener('pointerup', () => {
+    state.drawingNow = false;
+  });
+
+  // Progress Modal
+  function openProgressModal() {
+    sfxTap();
+    const learned = state.learnedIds.size;
+    const quizzes = state.solvedQuizIds.size;
+    const total = learned + quizzes;
+    const maxStars = getTotalPossibleStars();
+    const pct = Math.min(100, Math.round((total / Math.max(1, maxStars)) * 100));
+
+    let rank = '绿茵新星 🌱';
+    if (total >= 18) rank = '传奇战术大师 👑';
+    else if (total >= 12) rank = '球场大脑 🧠';
+    else if (total >= 6) rank = '小小队长 🏅';
+    else if (total >= 2) rank = '潜力球星 ⭐';
+
+    document.getElementById('stat-learned').textContent = String(learned);
+    document.getElementById('stat-quiz').textContent = String(quizzes);
+    document.getElementById('stat-rank').textContent = rank;
+    document.getElementById('stat-bar').style.width = Math.max(6, pct) + '%';
+    document.getElementById('progress-modal').classList.remove('hidden');
+  }
+
+  document.getElementById('btn-progress').addEventListener('click', openProgressModal);
+  document.getElementById('close-progress').addEventListener('click', () => {
+    document.getElementById('progress-modal').classList.add('hidden');
+  });
+  document.getElementById('btn-keep-learning').addEventListener('click', () => {
+    document.getElementById('progress-modal').classList.add('hidden');
+  });
+  document.getElementById('btn-reset-progress').addEventListener('click', () => {
+    state.learnedIds.clear();
+    state.solvedQuizIds.clear();
+    saveProgress();
+    document.getElementById('progress-modal').classList.add('hidden');
+    renderAll();
+    showToast('已重置学习记录');
+  });
+
+  // =========================================================
+  // 10. INIT
+  // =========================================================
+  window.addEventListener('resize', resizeCanvas);
+  window.addEventListener('load', () => {
+    loadProgress();
+    renderAll();
+    resizeCanvas();
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(tick);
+  });
+})();
+</script>
+</body>
+</html>
